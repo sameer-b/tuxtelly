@@ -24,11 +24,13 @@ describe("configuration boundaries", () => {
     (oldConfig.services[0] as unknown as { favorite: boolean }).favorite = true;
     delete (oldConfig.preferences as { openHomeAtStartup?: boolean })
       .openHomeAtStartup;
+    delete (oldConfig.preferences as { wallpaper?: string }).wallpaper;
     const migrated = parseConfig(JSON.stringify(oldConfig));
     expect(migrated.services.every((service) => !("favorite" in service))).toBe(
       true,
     );
     expect(migrated.preferences.openHomeAtStartup).toBe(false);
+    expect(migrated.preferences.wallpaper).toBe("gradient-aurora");
   });
   it("keeps service URLs and activity out of diagnostic reports", () => {
     const report = createDiagnosticReport(

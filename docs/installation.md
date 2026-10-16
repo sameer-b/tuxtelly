@@ -39,6 +39,9 @@ Open TuxTelly from Firefox's Extensions menu to reach its bundled Home screen.
 In Settings, grant access to the streaming sites you want TuxTelly to control.
 Return to Home, launch a service, and sign in directly on the provider's page.
 Use **Remote** to see the keys sent by the Rii remote and adjust bindings.
+In **Settings → Home & display**, choose a solid color, gradient, soft blur, or
+one of the bundled 4K photo wallpapers. The selection previews immediately and
+is stored with the profile settings when you save.
 
 The script uses a dedicated Firefox profile at
 `~/.local/share/tuxtelly-preview/profile`; it does not modify your normal Firefox

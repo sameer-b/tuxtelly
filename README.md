@@ -89,6 +89,9 @@ Home can be opened with the `Home` remote key or Firefox's `Alt+Shift+H` extensi
 shortcut; `F8` opens the in-page service switcher. Settings explain site access,
 provider sign-in, button remapping, and safe diagnostic export. System volume is
 controlled by KDE; player volume affects the active HTML video only.
+Home & display settings include solid colors, gradients, soft blurred palettes,
+and locally bundled 4K photo wallpapers. See the
+[wallpaper credits](packages/ui/src/assets/wallpapers/README.md).
 
 ## Repository layout
 

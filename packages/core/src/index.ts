@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const VERSION = "0.2.3";
+export const VERSION = "0.2.4";
 export const PROTOCOL = 1;
 export function webUrl(value: string): URL {
   const url = new URL(value);
@@ -104,6 +104,26 @@ export const configSchema = z
         wrap: z.boolean().default(true),
         fullscreenWindow: z.boolean().default(false),
         openHomeAtStartup: z.boolean().default(false),
+        wallpaper: z
+          .enum([
+            "solid-obsidian",
+            "solid-blue-hour",
+            "solid-pine",
+            "solid-plum",
+            "gradient-aurora",
+            "gradient-dusk",
+            "gradient-ember",
+            "gradient-ocean",
+            "blur-aurora",
+            "blur-twilight",
+            "blur-forest",
+            "blur-ember",
+            "image-stars",
+            "image-cabin",
+            "image-mist",
+            "image-forest",
+          ])
+          .default("gradient-aurora"),
       })
       .strict(),
     bindings: z.array(bindingSchema).max(40),

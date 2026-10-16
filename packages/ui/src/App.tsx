@@ -22,6 +22,7 @@ import {
   type State,
 } from "@tuxtelly/core";
 import "./styles.css";
+import { wallpaperGroups, wallpaperPresets } from "./wallpapers";
 
 function Logo() {
   return (
@@ -219,6 +220,10 @@ export function App({ client }: { client: Client }) {
   const lastUsed = config.services.find(
     (service) => service.id === state?.lastUsedServiceId && service.enabled,
   );
+  const wallpaper =
+    wallpaperPresets.find(
+      (preset) => preset.id === config.preferences.wallpaper,
+    ) ?? wallpaperPresets[0];
   return (
     <div
       className="app"
@@ -226,6 +231,8 @@ export function App({ client }: { client: Client }) {
         {
           "--scale": config.preferences.scale,
           "--overscan": `${config.preferences.overscan}vw`,
+          "--wallpaper-background": wallpaper.background,
+          "--wallpaper-filter": wallpaper.filter ?? "none",
         } as CSSProperties
       }
       onKeyDown={navigate}
@@ -492,6 +499,53 @@ export function App({ client }: { client: Client }) {
                 />
               </label>
             </div>
+            <fieldset className="wallpaper-picker">
+              <legend>Home screen wallpaper</legend>
+              <p className="hint">
+                Choose a color, gradient, soft blur, or 4K photo. Save settings
+                to keep your choice.
+              </p>
+              {wallpaperGroups.map((group) => (
+                <div className="wallpaper-group" key={group.name}>
+                  <h3>{group.name}</h3>
+                  <div className="wallpaper-options">
+                    {group.options.map((option) => (
+                      <button
+                        type="button"
+                        className={
+                          config.preferences.wallpaper === option.id
+                            ? "wallpaper-choice selected"
+                            : "wallpaper-choice"
+                        }
+                        aria-pressed={
+                          config.preferences.wallpaper === option.id
+                        }
+                        key={option.id}
+                        onClick={() =>
+                          setConfig({
+                            ...config,
+                            preferences: {
+                              ...config.preferences,
+                              wallpaper: option.id,
+                            },
+                          })
+                        }
+                      >
+                        <span
+                          className="wallpaper-swatch"
+                          style={{
+                            background: option.background,
+                            filter: option.filter ?? "none",
+                          }}
+                          aria-hidden="true"
+                        />
+                        <span>{option.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </fieldset>
             <label className="check">
               <input
                 type="checkbox"
