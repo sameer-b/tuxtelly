@@ -47,6 +47,12 @@ export const wallpaperGroups: {
           "radial-gradient(ellipse at 82% 14%, #493020 0, transparent 49%), linear-gradient(145deg, #171516, #1e2024 65%, #17221d)",
       },
       {
+        id: "gradient-synthwave",
+        name: "Neon synthwave",
+        background:
+          "radial-gradient(ellipse at 16% 14%, #672b88 0, transparent 42%), radial-gradient(ellipse at 82% 27%, #0d6177 0, transparent 43%), radial-gradient(ellipse at 65% 92%, #62274e 0, transparent 44%), linear-gradient(145deg, #0b0916, #151022 60%, #090e18)",
+      },
+      {
         id: "gradient-ocean",
         name: "Deep ocean",
         background: "linear-gradient(155deg, #0c1823, #12343a 54%, #111923)",

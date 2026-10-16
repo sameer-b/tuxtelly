@@ -783,7 +783,7 @@ input[type="checkbox"] {
   }
 }
 .app[data-theme="retro-vhs"] {
-  color: #f0e4c9;
+  color: #f2edff;
   font-family: "Trebuchet MS", "Segoe UI", sans-serif;
 }
 .app[data-theme="retro-vhs"]::after {
@@ -793,26 +793,27 @@ input[type="checkbox"] {
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse at center, transparent 52%, #0807054a 100%),
+    radial-gradient(ellipse at center, transparent 52%, #0805124a 100%),
     repeating-linear-gradient(to bottom, transparent 0 3px, #05050538 3px 4px);
 }
 .app[data-theme="retro-vhs"] .topbar {
   padding: 0 20px;
-  border-bottom-color: #78613f;
-  background: linear-gradient(180deg, #211d19e8, #171816e8);
+  border-bottom-color: #684880;
+  background: linear-gradient(180deg, #1b1428ed, #100d1ce8);
   box-shadow: 0 5px 24px #0004;
 }
 .app[data-theme="retro-vhs"] .wordmark {
-  color: #f2cd7e;
+  color: #ff72e1;
   font-family: Georgia, "Times New Roman", serif;
   letter-spacing: 0;
-  text-shadow: 0 0 18px #e1a64355;
+  text-shadow: 0 0 12px #ff4fd888, 0 0 28px #8e43ff66;
 }
 .app[data-theme="retro-vhs"] .wordmark svg {
-  color: #e1aa54;
+  color: #40eeff;
+  filter: drop-shadow(0 0 7px #40eeff88);
 }
 .app[data-theme="retro-vhs"] .eyebrow {
-  color: #d7ad63;
+  color: #40eeff;
   font-family: "Courier New", monospace;
   letter-spacing: 0.18em;
 }
@@ -822,43 +823,45 @@ input[type="checkbox"] {
   font-family: Georgia, "Times New Roman", serif;
 }
 .app[data-theme="retro-vhs"] h1 {
-  text-shadow: 0 3px 28px #e1a64324;
+  text-shadow: 0 3px 28px #a448ff55;
 }
 .app[data-theme="retro-vhs"] h1 span {
-  color: #e2bd75;
+  color: #ff72e1;
+  text-shadow: 0 0 18px #ff4fd866;
 }
 .app[data-theme="retro-vhs"] .subtitle,
 .app[data-theme="retro-vhs"] .panel p,
 .app[data-theme="retro-vhs"] .setup-guide p:not(.eyebrow) {
-  color: #c5b99c;
+  color: #c8bddf;
 }
 .app[data-theme="retro-vhs"] .nav {
-  color: #c6b99e;
+  color: #c3b5dc;
 }
 .app[data-theme="retro-vhs"] .nav.active {
-  color: #ffe3a1;
-  background: #59452c;
+  color: #fff;
+  background: linear-gradient(100deg, #75245f, #43236f);
+  box-shadow: inset 0 0 14px #ff4fd833, 0 0 16px #a448ff22;
 }
 .app[data-theme="retro-vhs"] .setup-guide,
 .app[data-theme="retro-vhs"] .living-room {
-  border-color: #755f3d;
-  background: linear-gradient(120deg, #211e19e8, #17221ee8);
+  border-color: #62477a;
+  background: linear-gradient(120deg, #1b1429e8, #111728e8);
   border-radius: 9px;
   box-shadow:
-    inset 0 1px #f5d18c20,
+    inset 0 1px #df91ff20,
     0 12px 34px #0003;
 }
 .app[data-theme="retro-vhs"] .service-card {
   position: relative;
-  border: 2px solid #806b48;
+  border: 2px solid #654e82;
   border-radius: 8px;
   background: linear-gradient(
     145deg,
-    color-mix(in srgb, var(--service-color) 20%, #241f1b),
-    #191b19 78%
+    color-mix(in srgb, var(--service-color) 20%, #20152c),
+    #12101d 78%
   );
   box-shadow:
-    inset 0 1px #f3dca32e,
+    inset 0 1px #e6a5ff2e,
     inset 0 -4px #07090855,
     0 8px 0 #11110f,
     0 17px 28px #0005;
@@ -867,17 +870,18 @@ input[type="checkbox"] {
   content: "";
   position: absolute;
   inset: 7px;
-  border: 1px solid #e3c78c20;
+  border: 1px solid #d49bff28;
   border-radius: 4px;
   pointer-events: none;
 }
 .app[data-theme="retro-vhs"] .service-card:hover,
 .app[data-theme="retro-vhs"] .service-card:focus-visible {
   transform: translateY(-3px);
-  border-color: #f1cb73;
+  border-color: #40eeff;
   box-shadow:
-    inset 0 1px #f3dca34a,
-    0 0 20px #dfad4b28,
+    inset 0 1px #40eeff48,
+    0 0 20px #ff4fd844,
+    0 0 32px #40eeff22,
     0 8px 0 #11110f,
     0 20px 32px #0007;
 }
@@ -888,52 +892,53 @@ input[type="checkbox"] {
 .app[data-theme="retro-vhs"] .service-number,
 .app[data-theme="retro-vhs"] .card-bottom > span:last-child,
 .app[data-theme="retro-vhs"] .quiet {
-  color: #b3a17e;
+  color: #a99bbf;
 }
 .app[data-theme="retro-vhs"] .open-tag,
 .app[data-theme="retro-vhs"] .access-tag {
-  color: #f0ca78;
+  color: #40eeff;
 }
 .app[data-theme="retro-vhs"] .pill {
-  color: #f0dba8;
-  background: #51432c;
+  color: #ffb8f0;
+  background: #43234f;
 }
 .app[data-theme="retro-vhs"] button {
-  border-color: #756345;
+  border-color: #674a82;
   border-radius: 5px;
-  background: linear-gradient(#38342b, #282820);
-  color: #f1e3c4;
+  background: linear-gradient(#30243f, #211a30);
+  color: #f2edff;
 }
 .app[data-theme="retro-vhs"] button:hover {
-  background: linear-gradient(#51452f, #31291f);
+  background: linear-gradient(#50305f, #2c2342);
 }
 .app[data-theme="retro-vhs"] .primary {
-  color: #241b10;
-  background: linear-gradient(#f2d38f, #c3944a);
-  border-color: #edcf8e;
+  color: #160d1f;
+  background: linear-gradient(110deg, #ff8be8, #d85cff 58%, #62f1ff);
+  border-color: #ffadf0;
+  box-shadow: 0 0 16px #ff4fd844;
 }
 .app[data-theme="retro-vhs"] .primary:hover {
-  background: linear-gradient(#ffe3a6, #d9ad63);
+  background: linear-gradient(110deg, #ffb2ef, #eb83ff 58%, #a3f7ff);
 }
 .app[data-theme="retro-vhs"] kbd {
-  color: #f0dba8;
-  border-color: #756345;
-  background: #27241e;
+  color: #71f4ff;
+  border-color: #634a79;
+  background: #191322;
   border-radius: 3px;
 }
 .app[data-theme="retro-vhs"] .panel {
-  border-color: #64543a;
+  border-color: #59436f;
   border-radius: 9px;
-  background: #1b1d19ef;
+  background: #171221ef;
   box-shadow: 0 12px 35px #0003;
 }
 .app[data-theme="retro-vhs"] input,
 .app[data-theme="retro-vhs"] textarea,
 .app[data-theme="retro-vhs"] select {
-  color: #f2e6cb;
-  border-color: #66553a;
+  color: #f2edff;
+  border-color: #634a79;
   border-radius: 4px;
-  background: #111512;
+  background: #100d18;
 }
 .app[data-theme="windows-95"] {
   color: #111;

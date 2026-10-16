@@ -31,11 +31,12 @@ describe("configuration boundaries", () => {
       true,
     );
     expect(migrated.preferences.openHomeAtStartup).toBe(false);
-    expect(migrated.preferences.wallpaper).toBe("gradient-ember");
+    expect(migrated.preferences.wallpaper).toBe("gradient-synthwave");
     expect(migrated.preferences.theme).toBe("retro-vhs");
   });
   it("offers a cozy retro default and recognized alternate themes", () => {
     expect(defaultConfig.preferences.theme).toBe("retro-vhs");
+    expect(defaultConfig.preferences.wallpaper).toBe("gradient-synthwave");
     for (const theme of ["windows-95", "midnight"] as const) {
       const config = structuredClone(defaultConfig);
       config.preferences.theme = theme;
