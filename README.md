@@ -12,17 +12,19 @@ logins and DRM stay in ordinary Firefox tabs on the TV laptop.
 **Initial development preview.** The approved plan is being implemented in one
 private monorepo. Public release and persistent extension signing remain pending.
 
-The preview includes pinned and ordered services, a last-used resume action,
+The preview includes recent-use service ordering, a last-used resume action,
 guided service setup, keyboard mapping and calibration, managed tabs, an in-page
 switcher, generic spatial navigation, HTML video controls, optional site
 permissions, local config backup, privacy-limited diagnostics, and a bundled
 Home screen.
 
-Local checks pass 22 unit tests; 19 Firefox integration checks pass on the
-reference Fedora 44 laptop with Firefox 156. These establish fixture behavior,
-not full compatibility with streaming providers. A separate live YouTube probe
-passes 9 checks covering public playback, search, controls, and tab switching.
-Netflix, Disney+, HBO Max, and signed-in YouTube flows remain unverified.
+Local checks pass 25 unit tests. The most recent recorded run passed 19 Firefox
+integration checks on the reference Fedora 44 laptop with Firefox 156; the new
+Prime Video and recent-use-ordering flows still need a browser run. Fixture checks
+do not establish full provider compatibility. A separate live YouTube probe
+passed 9 checks covering public playback, search, controls, and tab switching.
+Prime Video, Netflix, Disney+, HBO Max, and signed-in YouTube flows remain
+unverified.
 See [test status](docs/acceptance.md).
 
 ## Try the local preview
@@ -80,7 +82,8 @@ depend on the website and require permission plus a compatible adapter.
 - Fedora 44, KDE Wayland, Firefox; Intel i5-1135G7, x86-64, 8 GB RAM.
 - Rii MX3 2.4 GHz air mouse and keyboard remote, pending physical calibration.
 - One local Firefox profile; optional static hosting only for multiple TVs.
-- Provider implementation and testing order: YouTube, Netflix, Disney+, HBO Max.
+- Provider implementation and testing order: YouTube, Netflix, Disney+, HBO Max,
+  then Prime Video.
 
 Home can be opened with the `Home` remote key or Firefox's `Alt+Shift+H` extension
 shortcut; `F8` opens the in-page service switcher. Settings explain site access,

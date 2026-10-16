@@ -177,6 +177,7 @@ h3 {
   gap: 20px;
 }
 .setup-guide {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr 1.4fr auto;
   align-items: center;
@@ -186,6 +187,25 @@ h3 {
   border: 1px solid #344a3b;
   border-radius: 16px;
   background: linear-gradient(110deg, #1b2b21, #17201b);
+}
+.dismiss-setup {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: #a6b4aa;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+.dismiss-setup:hover,
+.dismiss-setup:focus-visible {
+  color: #fff;
+  background: #ffffff14;
 }
 .setup-guide h2 {
   margin: 0 0 8px;
@@ -229,20 +249,6 @@ h3 {
 }
 .service-entry .service-card {
   width: 100%;
-}
-.favorite-toggle {
-  position: absolute;
-  right: 12px;
-  top: 12px;
-  z-index: 1;
-  padding: 5px 10px;
-  border: 0;
-  background: #101716aa;
-  color: #ffd36e;
-  font-size: 1.2em;
-}
-.favorite-toggle:hover {
-  background: #101716;
 }
 .access-tag {
   font-size: 0.6em;
@@ -321,6 +327,11 @@ h3 {
 }
 .service-symbol.disney {
   font-style: italic;
+}
+.service-symbol.prime {
+  font-size: 2.35em;
+  font-weight: 700;
+  letter-spacing: -0.08em;
 }
 .card-bottom {
   font-size: 0.87em;

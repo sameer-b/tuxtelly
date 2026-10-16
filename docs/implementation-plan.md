@@ -2,7 +2,7 @@
 
 Status: **Approved and in progress. Initial preview implemented.**
 
-The confirmed provider order is YouTube, Netflix, Disney+, HBO Max. Implementation
+The confirmed provider order is YouTube, Netflix, Disney+, HBO Max, then Prime Video. Implementation
 was approved by the project owner. The following phases retain the full release
 scope; the initial preview does not satisfy all exit criteria.
 
@@ -19,12 +19,13 @@ scope; the initial preview does not satisfy all exit criteria.
   pause/mute policy, and HTML video controls implemented. Nine live YouTube public-video
   checks pass, including a regression fix for focused player wrappers. Full YouTube qualification,
   virtualized catalogs, and additional focus restoration remain.
-- Phases 4–5: initial provider selector hooks exist; Netflix, Disney+, and HBO Max
-  support is unverified and requires account-based implementation/acceptance.
+- Phases 4–5: initial provider selector hooks exist for YouTube, Netflix, Disney+,
+  HBO Max, and Prime Video. Prime Video keyboard-compatible controls are implemented;
+  provider acceptance for all of these requires account-based testing.
 - Phase 6: Fedora diagnostics, local preview script, packaging, and installation
   documentation exist. Extension signing, performance/soak tests, and release
   qualification remain pending; Caddy/LXC is optional for later multi-TV sharing.
-- Follow-up Home improvements: pinned services, two-way ordering, last-used resume,
+- Follow-up Home improvements: recent-use ordering, last-used resume,
   visible access status, onboarding guidance, action-labeled key mapping, and a
   privacy-limited diagnostic export are implemented. AMO signing and Fedora policy
   install/removal scripts are prepared; credentials and TV-side acceptance remain.

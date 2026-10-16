@@ -5,6 +5,7 @@ import {
   configSchema,
   defaultConfig,
   isLauncher,
+  migratePrimeVideo,
   originPattern,
   requestSchema,
   ServiceTabs,
@@ -27,18 +28,33 @@ export default defineBackground(() => {
   let recovery: string | undefined;
   let lastUsedServiceId: string | undefined;
   const ready = browser.storage.local
-    .get(["config", "lastValidConfig", "lastUsedServiceId"])
-    .then((stored) => {
+    .get([
+      "config",
+      "lastValidConfig",
+      "lastUsedServiceId",
+      "primeServiceMigration",
+    ])
+    .then(async (stored) => {
       if (typeof stored.lastUsedServiceId === "string")
         lastUsedServiceId = stored.lastUsedServiceId;
       if (stored.config === undefined) return;
       const parsed = configSchema.safeParse(stored.config);
+      let canMigrate = parsed.success;
       if (parsed.success) config = parsed.data;
       else {
         const backup = configSchema.safeParse(stored.lastValidConfig);
         if (backup.success) config = backup.data;
+        canMigrate = backup.success;
         recovery =
           "Your saved configuration could not be loaded. A valid backup or defaults are in use; review settings before saving.";
+      }
+      if (canMigrate && stored.primeServiceMigration !== true) {
+        config = migratePrimeVideo(config);
+        await browser.storage.local.set({
+          config,
+          lastValidConfig: config,
+          primeServiceMigration: true,
+        });
       }
     });
   const serviceFor = async (tabId: number, url?: string) => {
@@ -139,7 +155,20 @@ export default defineBackground(() => {
       await pauseOthers(windowId, service.id);
       const tab = await port.open(service, windowId);
       lastUsedServiceId = service.id;
-      await browser.storage.local.set({ lastUsedServiceId });
+      if (config.services[0]?.id !== service.id) {
+        config = {
+          ...config,
+          services: [
+            service,
+            ...config.services.filter((item) => item.id !== service.id),
+          ],
+        };
+      }
+      await browser.storage.local.set({
+        config,
+        lastValidConfig: config,
+        lastUsedServiceId,
+      });
       await inject(tab.id);
       if (
         await sessions.getTabValue(tab.id, "tuxtelly.muted").catch(() => false)

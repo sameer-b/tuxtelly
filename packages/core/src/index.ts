@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const VERSION = "0.1.0";
+export const VERSION = "0.2.3";
 export const PROTOCOL = 1;
 export function webUrl(value: string): URL {
   const url = new URL(value);
@@ -70,14 +70,14 @@ export const serviceSchema = z
       .min(1)
       .max(12),
     adapter: z
-      .enum(["generic", "youtube", "netflix", "disney", "hbo"])
+      .enum(["generic", "youtube", "netflix", "disney", "hbo", "prime"])
       .default("generic"),
     color: z
       .string()
       .regex(/^#[0-9a-fA-F]{6}$/)
       .default("#5be5bc"),
     enabled: z.boolean().default(true),
-    favorite: z.boolean().default(false),
+    favorite: z.boolean().optional(),
     backgroundAudio: z.boolean().default(false),
   })
   .strict()
@@ -87,7 +87,8 @@ export const serviceSchema = z
     } catch {
       return false;
     }
-  }, "The start address must be included in the service origins.");
+  }, "The start address must be included in the service origins.")
+  .transform(({ favorite: _favorite, ...service }) => service);
 export type Service = z.infer<typeof serviceSchema>;
 export const configSchema = z
   .object({
@@ -162,6 +163,14 @@ export const defaultConfig: Config = configSchema.parse({
       adapter: "hbo",
       color: "#b38bff",
     },
+    {
+      id: "prime",
+      name: "Prime Video",
+      url: "https://www.primevideo.com/",
+      origins: ["https://www.primevideo.com"],
+      adapter: "prime",
+      color: "#38b6e8",
+    },
   ],
   bindings: [
     { key: "Home", action: "home" },
@@ -179,6 +188,14 @@ export const defaultConfig: Config = configSchema.parse({
     { key: "-", action: "volumeDown" },
   ],
 });
+export function migratePrimeVideo(config: Config): Config {
+  if (config.services.some((service) => service.id === "prime")) return config;
+  const prime = defaultConfig.services.find(
+    (service) => service.id === "prime",
+  );
+  if (!prime) return config;
+  return { ...config, services: [...config.services, structuredClone(prime)] };
+}
 export function bindingId(
   key: Pick<Binding, "key" | "alt" | "ctrl" | "shift" | "meta">,
 ): string {

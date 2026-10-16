@@ -7,6 +7,7 @@ import {
   defaultConfig,
   isLauncher,
   matchAction,
+  migratePrimeVideo,
   nearest,
   originPattern,
   parseConfig,
@@ -18,15 +19,15 @@ import {
 describe("configuration boundaries", () => {
   it("round-trips defaults", () =>
     expect(parseConfig(JSON.stringify(defaultConfig))).toEqual(defaultConfig));
-  it("adds the default pin state when reading configurations from older previews", () => {
+  it("drops legacy favorite flags when reading older configurations", () => {
     const oldConfig = structuredClone(defaultConfig);
+    (oldConfig.services[0] as unknown as { favorite: boolean }).favorite = true;
     delete (oldConfig.preferences as { openHomeAtStartup?: boolean })
       .openHomeAtStartup;
-    oldConfig.services.forEach(
-      (service) => delete (service as { favorite?: boolean }).favorite,
-    );
     const migrated = parseConfig(JSON.stringify(oldConfig));
-    expect(migrated.services.every((service) => !service.favorite)).toBe(true);
+    expect(migrated.services.every((service) => !("favorite" in service))).toBe(
+      true,
+    );
     expect(migrated.preferences.openHomeAtStartup).toBe(false);
   });
   it("keeps service URLs and activity out of diagnostic reports", () => {
@@ -39,7 +40,7 @@ describe("configuration boundaries", () => {
       "Firefox test",
       "2026-10-16T00:00:00.000Z",
     );
-    expect(report.configuredServices).toBe(4);
+    expect(report.configuredServices).toBe(5);
     expect(JSON.stringify(report)).not.toContain("youtube.com");
     expect(JSON.stringify(report)).not.toContain("lastUsedServiceId");
   });
@@ -78,6 +79,33 @@ describe("configuration boundaries", () => {
       "https://youtube.com/",
     ])
       expect(allowedServiceUrl(service, url)).toBe(false);
+  });
+  it("includes Prime Video with an exact first-party origin and adapter", () => {
+    const prime = defaultConfig.services.find(
+      (service) => service.id === "prime",
+    );
+    expect(prime).toMatchObject({
+      name: "Prime Video",
+      url: "https://www.primevideo.com/",
+      origins: ["https://www.primevideo.com"],
+      adapter: "prime",
+    });
+    expect(
+      allowedServiceUrl(prime!, "https://www.primevideo.com/detail/x"),
+    ).toBe(true);
+    expect(allowedServiceUrl(prime!, "https://primevideo.com/")).toBe(false);
+  });
+  it("adds Prime Video once when upgrading an existing saved config", () => {
+    const existing = structuredClone(defaultConfig);
+    existing.services = existing.services.filter(
+      (service) => service.id !== "prime",
+    );
+    const upgraded = migratePrimeVideo(existing);
+    expect(upgraded.services.at(-1)?.id).toBe("prime");
+    expect(migratePrimeVideo(upgraded).services).toEqual(upgraded.services);
+    expect(existing.services.some((service) => service.id === "prime")).toBe(
+      false,
+    );
   });
   it("does not trust sibling paths or other ports as the launcher", () => {
     const config = {

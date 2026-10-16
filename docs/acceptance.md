@@ -17,10 +17,11 @@ navigation, protected text input, actual fixture-video seeking, captions, player
 fullscreen, pause-on-switch, repeated-launch deduplication, closed-tab recovery,
 bridge isolation, permission revocation, and offline Home activation.
 
-The current working copy passes 22 unit tests, TypeScript, ESLint, Prettier,
-builds, and extension lint. The Fedora 44 / Firefox 156.0 headless run passed 19
-browser checks, including guided setup, pinned services, background-tab pause,
-and cleanup of TuxTelly-owned mute state. Firefox lint reports two bundled React
+The current working copy passes 25 unit tests, TypeScript, ESLint, Prettier,
+builds, and extension lint. The most recent recorded Fedora 44 / Firefox 156.0
+headless run passed 19 browser checks, including guided setup, background-tab
+pause, and cleanup of TuxTelly-owned mute state. The new Prime Video and recent-use
+ordering flows still need a browser run. Firefox lint reports two bundled React
 renderer `innerHTML` warnings; project code does not use raw HTML rendering or
 runtime code generation.
 
@@ -40,16 +41,16 @@ The public test video was [Blender's Big Buck Bunny](https://www.youtube.com/wat
 Its captions control reported unavailable, so real YouTube captions remain untested.
 This is one public video in headless Firefox, not full YouTube qualification.
 
-| Flow                                     | YouTube                                      | Netflix  | Disney+  | HBO Max  |
-| ---------------------------------------- | -------------------------------------------- | -------- | -------- | -------- |
-| Ordinary Firefox playback                | Passed: one public video                     | Untested | Untested | Untested |
-| Provider login and profile selection     | Untested                                     | Untested | Untested | Untested |
-| Catalog, search, title/episode selection | Partial: search and spatial focus            | Untested | Untested | Untested |
-| Play/pause and seek                      | Passed: public video                         | Untested | Untested | Untested |
-| Subtitles/audio menu                     | Untested: captions unavailable on test video | Untested | Untested | Untested |
-| Browser/player fullscreen                | Passed: player only, headless                | Untested | Untested | Untested |
-| Switch away, pause, and return           | Passed: Home and existing watch tab          | Untested | Untested | Untested |
-| Login persistence across restart         | Untested                                     | Untested | Untested | Untested |
+| Flow                                     | YouTube                                      | Netflix  | Disney+  | HBO Max  | Prime Video |
+| ---------------------------------------- | -------------------------------------------- | -------- | -------- | -------- | ----------- |
+| Ordinary Firefox playback                | Passed: one public video                     | Untested | Untested | Untested | Untested    |
+| Provider login and profile selection     | Untested                                     | Untested | Untested | Untested | Untested    |
+| Catalog, search, title/episode selection | Partial: search and spatial focus            | Untested | Untested | Untested | Untested    |
+| Play/pause and seek                      | Passed: public video                         | Untested | Untested | Untested | Untested    |
+| Subtitles/audio menu                     | Untested: captions unavailable on test video | Untested | Untested | Untested | Untested    |
+| Browser/player fullscreen                | Passed: player only, headless                | Untested | Untested | Untested | Untested    |
+| Switch away, pause, and return           | Passed: Home and existing watch tab          | Untested | Untested | Untested | Untested    |
+| Login persistence across restart         | Untested                                     | Untested | Untested | Untested | Untested    |
 
 Additional gates:
 

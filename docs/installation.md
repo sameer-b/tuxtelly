@@ -52,8 +52,9 @@ to return to TuxTelly, `F8` to open the service switcher, and Firefox's
 may reserve some remote keys; use TuxTelly's **Remote** page to inspect captured
 keys and Firefox's **Manage Extension Shortcuts** page to change the Home command.
 
-On Home, pinned services appear first; use **Settings → Services** to pin, hide,
-rename, and move services. **Resume** reopens the last used enabled service.
+Home automatically places the most recently opened service first. Use
+**Settings → Services** to hide, rename, or remove services. **Resume** reopens
+the last used enabled service.
 Settings explain why site access is requested, while sign-in always happens on
 the provider's own page. **Download private diagnostics** exports app/browser
 versions and counts, not service URLs, credentials, cookies, viewing history, or

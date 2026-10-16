@@ -129,19 +129,10 @@ try {
       .then((items) => items.length),
     3,
   );
-  await driver.findElement(By.css('[aria-label="Pin Disney+"]')).click();
-  await driver.wait(async () => {
-    const state = await message({ type: "state" });
-    return state.data.config.services.find((service) => service.id === "disney")
-      .favorite;
-  }, 5000);
-  assert.equal(
-    await driver.executeScript(
-      'return document.querySelector(".service-entry [data-service]").dataset.service',
-    ),
-    "disney",
+  assert.ok(
+    initial.data.config.services.some((service) => service.id === "prime"),
   );
-  check("guided setup appears and pinned services move to the top");
+  check("guided setup and built-in Prime Video service appear");
   const config = (await message({ type: "state" })).data.config;
   config.launcherUrl = origin + "/";
   config.services = ["one", "two"].map((id) => ({
@@ -205,7 +196,12 @@ try {
     await driver.executeScript("return document.activeElement.id"),
     "card-two",
   );
-  check("spatial navigation moves across service controls");
+  await driver.actions().sendKeys(Key.ARROW_LEFT).perform();
+  assert.equal(
+    await driver.executeScript("return document.activeElement.id"),
+    "card-one",
+  );
+  check("service arrows follow tab order in both directions");
   await driver.findElement(By.id("search")).sendKeys("f c m k");
   assert.equal(
     await driver.findElement(By.id("search")).getAttribute("value"),
@@ -275,6 +271,11 @@ try {
   );
   await driver.switchTo().window(twoHandle);
   await driver.wait(until.elementLocated(By.id("card-one")), 10000);
+  assert.equal(
+    (await message({ type: "state" })).data.config.services[0].id,
+    "two",
+  );
+  check("most recently opened service moves to the first Home position");
   await driver.switchTo().window(oneHandle);
   await driver.findElement(By.id("play")).click();
   await driver.wait(
@@ -285,6 +286,14 @@ try {
     5000,
   );
   await driver.switchTo().window(homeHandle);
+  await driver.wait(
+    async () =>
+      await driver.executeScript(
+        'return document.querySelector(".service-entry [data-service]")?.dataset.service === "two"',
+      ),
+    5000,
+  );
+  check("Home live-sorts services by recent use on return");
   await driver.wait(
     async () =>
       await driver.executeScript(

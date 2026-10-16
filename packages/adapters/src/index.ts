@@ -3,7 +3,6 @@ import {
   eventBinding,
   isEditing,
   matchAction,
-  nearest,
   type Action,
   type Config,
   type Service,
@@ -48,9 +47,12 @@ export function isPlaybackSurface(
   return (
     selected === document.body ||
     selected === video ||
-    (adapter === "youtube" &&
-      selected?.matches(".html5-video-player") === true &&
-      selected.contains(video))
+    (selected instanceof Element &&
+      selected.contains(video) &&
+      !selected.matches(
+        'a,button,input,select,textarea,[role="button"],[role="link"]',
+      ) &&
+      (adapter === "youtube" || adapter === "prime"))
   );
 }
 const selectors: Record<
@@ -75,6 +77,12 @@ const selectors: Record<
     captions: 'button[aria-label*="subtitle" i], button[aria-label*="audio" i]',
     fullscreen:
       'button[aria-label*="full screen" i], button[aria-label*="fullscreen" i]',
+  },
+  prime: {
+    captions:
+      'button[aria-label*="subtitle" i], button[aria-label*="caption" i], [role="button"][aria-label*="subtitle" i], [data-testid*="subtitle" i], [data-testid*="caption" i]',
+    fullscreen:
+      'button[aria-label*="full screen" i], button[aria-label*="fullscreen" i], [role="button"][aria-label*="full screen" i], [data-testid*="fullscreen" i]',
   },
   generic: {
     captions:
@@ -156,17 +164,59 @@ function focusables(): HTMLElement[] {
       'dialog[open], [role="dialog"][aria-modal="true"]',
     ),
   ].find((el) => el.getBoundingClientRect().width > 0);
-  return [
-    ...(dialog ?? document).querySelectorAll<HTMLElement>(
-      'a[href],button,input,select,textarea,[role="button"],[role="link"],[tabindex]',
-    ),
-  ].filter(
-    (el) =>
-      !el.closest('[inert],[hidden],[aria-hidden="true"]') &&
-      !el.matches(':disabled,[aria-disabled="true"]') &&
-      el.getBoundingClientRect().width > 0 &&
-      getComputedStyle(el).visibility !== "hidden",
-  );
+  const selector =
+    'a[href],button,input:not([type="hidden"]),select,textarea,iframe,[role="button"],[role="link"],[tabindex]';
+  const found: HTMLElement[] = [];
+  const visit = (root: ParentNode) => {
+    for (const child of root.children) {
+      if (child instanceof HTMLElement && child.matches(selector)) {
+        if (
+          child.tabIndex >= 0 &&
+          !isHidden(child) &&
+          !child.matches(':disabled,[aria-disabled="true"]') &&
+          child.getBoundingClientRect().width > 0 &&
+          child.getBoundingClientRect().height > 0 &&
+          getComputedStyle(child).visibility !== "hidden"
+        )
+          found.push(child);
+      }
+      if (child.shadowRoot) visit(child.shadowRoot);
+      visit(child);
+    }
+  };
+  const isHidden = (el: HTMLElement) => {
+    let current: Element | null = el;
+    while (current) {
+      if (current.matches('[inert],[hidden],[aria-hidden="true"]')) return true;
+      const parent: Element | null = current.parentElement;
+      current =
+        parent ??
+        (current.getRootNode() instanceof ShadowRoot
+          ? (current.getRootNode() as ShadowRoot).host
+          : null);
+    }
+    return false;
+  };
+  visit(dialog ?? document);
+  // Elements with a positive tabindex precede the normal tab sequence.
+  return found
+    .map((el, order) => ({ el, order }))
+    .sort((a, b) => {
+      const at = a.el.tabIndex;
+      const bt = b.el.tabIndex;
+      const ap = at > 0;
+      const bp = bt > 0;
+      if (ap && bp && at !== bt) return at - bt;
+      if (ap !== bp) return ap ? -1 : 1;
+      return a.order - b.order;
+    })
+    .map(({ el }) => el);
+}
+function deepActiveElement(): Element | null {
+  let active: Element | null = document.activeElement;
+  while (active instanceof HTMLElement && active.shadowRoot?.activeElement)
+    active = active.shadowRoot.activeElement;
+  return active;
 }
 export function installControls(
   service: Service,
@@ -321,52 +371,38 @@ export function installControls(
     )[event.key as "ArrowLeft" | "ArrowRight" | "ArrowUp" | "ArrowDown"];
     if (!direction) return;
     const video = activeVideo();
-    const selected = document.activeElement;
+    const selected = deepActiveElement();
     if (
       video &&
-      !video.paused &&
       isPlaybackSurface(video, selected, service.adapter) &&
-      ["left", "right"].includes(direction)
+      ((["left", "right"].includes(direction) &&
+        (!video.paused || service.adapter === "prime")) ||
+        (service.adapter === "prime" && ["up", "down"].includes(direction)))
     ) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      void playerAction(
-        direction === "left" ? "seekBackward" : "seekForward",
-        service,
-        config,
-      );
+      const action =
+        direction === "left"
+          ? "seekBackward"
+          : direction === "right"
+            ? "seekForward"
+            : direction === "up"
+              ? "volumeUp"
+              : "volumeDown";
+      void playerAction(action, service, config);
       return;
     }
     const elements = focusables();
     if (!elements.length) return;
     const current = elements.indexOf(selected as HTMLElement);
+    const forward = direction === "right" || direction === "down";
+    const step = forward ? 1 : -1;
     const index =
-      current < 0
-        ? 0
-        : nearest(
-            elements[current].getBoundingClientRect(),
-            elements.map((el) => el.getBoundingClientRect()),
-            direction,
-          );
+      current < 0 ? (forward ? 0 : elements.length - 1) : current + step;
+    if (index < 0 || index >= elements.length) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    if (index >= 0) focus(elements[index]);
-    else
-      window.scrollBy({
-        top:
-          direction === "down"
-            ? innerHeight * 0.65
-            : direction === "up"
-              ? -innerHeight * 0.65
-              : 0,
-        left:
-          direction === "right"
-            ? innerWidth * 0.5
-            : direction === "left"
-              ? -innerWidth * 0.5
-              : 0,
-        behavior: "instant",
-      });
+    focus(elements[index]);
   };
   document.addEventListener("keydown", onKey, true);
   return {

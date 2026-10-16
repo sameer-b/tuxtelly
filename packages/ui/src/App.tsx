@@ -77,6 +77,9 @@ export function App({ client }: { client: Client }) {
       : "library",
   );
   const [message, setMessage] = useState("");
+  const [showSetupGuide, setShowSetupGuide] = useState(
+    () => localStorage.getItem("tuxtelly.dismissedSetupGuide") !== "true",
+  );
   const [busy, setBusy] = useState(false);
   const [connected, setConnected] = useState(false);
   const [now, setNow] = useState(new Date());
@@ -117,8 +120,10 @@ export function App({ client }: { client: Client }) {
       requestAnimationFrame(focusSelectedService);
     };
     const onVisibilityChange = () => {
-      if (document.visibilityState === "visible")
+      if (document.visibilityState === "visible") {
+        void refresh();
         requestAnimationFrame(focusSelectedService);
+      }
     };
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVisibilityChange);
@@ -210,9 +215,7 @@ export function App({ client }: { client: Client }) {
       granted.has(originPattern(origin)),
     );
   }
-  const visibleServices = [...config.services]
-    .filter((service) => service.enabled)
-    .sort((a, b) => Number(b.favorite) - Number(a.favorite));
+  const visibleServices = config.services.filter((service) => service.enabled);
   const lastUsed = config.services.find(
     (service) => service.id === state?.lastUsedServiceId && service.enabled,
   );
@@ -285,46 +288,59 @@ export function App({ client }: { client: Client }) {
               <span>Your rules.</span>
             </h1>
             <p className="subtitle">
-              All your favorites. One remote. Make yourself at home.
+              Your shows. One remote. Make yourself at home.
             </p>
           </div>
-          <section className="setup-guide" aria-labelledby="setup-title">
-            <div>
-              <p className="eyebrow">FIRST TIME HERE?</p>
-              <h2 id="setup-title">Three steps to your shows</h2>
-              <p>
-                Choose a service, allow TuxTelly to control that site, then sign
-                in on the service’s own page.
-              </p>
-            </div>
-            <ol>
-              <li>
-                <span className="step-done">1</span> Choose a service below or
-                add one in Settings.
-              </li>
-              <li>
-                <span className="step-done">2</span> Grant site access in
-                Settings. This enables navigation and player controls.
-              </li>
-              <li>
-                <span className="step-done">3</span> Sign in directly with the
-                provider. TuxTelly never asks for your password.
-              </li>
-            </ol>
-            <div className="button-row setup-actions">
-              <button onClick={settings}>Set up services</button>
-              {lastUsed && (
-                <button
-                  className="primary"
-                  onClick={() =>
-                    void request({ type: "open", serviceId: lastUsed.id })
-                  }
-                >
-                  Resume {lastUsed.name}
-                </button>
-              )}
-            </div>
-          </section>
+          {showSetupGuide && (
+            <section className="setup-guide" aria-labelledby="setup-title">
+              <button
+                className="dismiss-setup"
+                aria-label="Dismiss getting started guide"
+                title="Dismiss getting started guide"
+                onClick={() => {
+                  localStorage.setItem("tuxtelly.dismissedSetupGuide", "true");
+                  setShowSetupGuide(false);
+                }}
+              >
+                ×
+              </button>
+              <div>
+                <p className="eyebrow">FIRST TIME HERE?</p>
+                <h2 id="setup-title">Three steps to your shows</h2>
+                <p>
+                  Choose a service, allow TuxTelly to control that site, then
+                  sign in on the service’s own page.
+                </p>
+              </div>
+              <ol>
+                <li>
+                  <span className="step-done">1</span> Choose a service below or
+                  add one in Settings.
+                </li>
+                <li>
+                  <span className="step-done">2</span> Grant site access in
+                  Settings. This enables navigation and player controls.
+                </li>
+                <li>
+                  <span className="step-done">3</span> Sign in directly with the
+                  provider. TuxTelly never asks for your password.
+                </li>
+              </ol>
+              <div className="button-row setup-actions">
+                <button onClick={settings}>Set up services</button>
+                {lastUsed && (
+                  <button
+                    className="primary"
+                    onClick={() =>
+                      void request({ type: "open", serviceId: lastUsed.id })
+                    }
+                  >
+                    Resume {lastUsed.name}
+                  </button>
+                )}
+              </div>
+            </section>
+          )}
           <div className="section-label">
             <h2>Your services</h2>
             <span>{visibleServices.length} in your collection</span>
@@ -364,7 +380,9 @@ export function App({ client }: { client: Client }) {
                         ? "D+"
                         : service.adapter === "hbo"
                           ? "HBO"
-                          : service.name.slice(0, 1).toUpperCase()}
+                          : service.adapter === "prime"
+                            ? "prime"
+                            : service.name.slice(0, 1).toUpperCase()}
                   </div>
                   <div className="card-bottom">
                     <span>{service.name}</span>
@@ -373,36 +391,6 @@ export function App({ client }: { client: Client }) {
                     </span>
                   </div>
                 </button>
-                {client.kind === "extension" && (
-                  <button
-                    className="favorite-toggle"
-                    aria-label={
-                      service.favorite
-                        ? `Unpin ${service.name}`
-                        : `Pin ${service.name}`
-                    }
-                    aria-pressed={service.favorite}
-                    onClick={() => {
-                      const index = config.services.findIndex(
-                        (item) => item.id === service.id,
-                      );
-                      updateService(index, { favorite: !service.favorite });
-                      void request({
-                        type: "save",
-                        config: configSchema.parse({
-                          ...config,
-                          services: config.services.map((item) =>
-                            item.id === service.id
-                              ? { ...item, favorite: !service.favorite }
-                              : item,
-                          ),
-                        }),
-                      }).then(() => refresh());
-                    }}
-                  >
-                    {service.favorite ? "★" : "☆"}
-                  </button>
-                )}
               </div>
             ))}
           </div>
@@ -639,11 +627,16 @@ export function App({ client }: { client: Client }) {
                         })
                       }
                     >
-                      {["generic", "youtube", "netflix", "disney", "hbo"].map(
-                        (adapter) => (
-                          <option key={adapter}>{adapter}</option>
-                        ),
-                      )}
+                      {[
+                        "generic",
+                        "youtube",
+                        "netflix",
+                        "disney",
+                        "hbo",
+                        "prime",
+                      ].map((adapter) => (
+                        <option key={adapter}>{adapter}</option>
+                      ))}
                     </select>
                   </label>
                   <label>
@@ -677,16 +670,6 @@ export function App({ client }: { client: Client }) {
                     }
                   />
                   Show in library
-                </label>
-                <label className="check">
-                  <input
-                    type="checkbox"
-                    checked={service.favorite}
-                    onChange={(e) =>
-                      updateService(index, { favorite: e.target.checked })
-                    }
-                  />
-                  Pin near the top of Home
                 </label>
                 <label className="check">
                   <input
@@ -727,32 +710,6 @@ export function App({ client }: { client: Client }) {
                     Grant site access
                   </button>
                   <button
-                    disabled={index === 0}
-                    onClick={() => {
-                      const services = [...config.services];
-                      [services[index - 1], services[index]] = [
-                        services[index],
-                        services[index - 1],
-                      ];
-                      setConfig({ ...config, services });
-                    }}
-                  >
-                    Move up
-                  </button>
-                  <button
-                    disabled={index === config.services.length - 1}
-                    onClick={() => {
-                      const services = [...config.services];
-                      [services[index], services[index + 1]] = [
-                        services[index + 1],
-                        services[index],
-                      ];
-                      setConfig({ ...config, services });
-                    }}
-                  >
-                    Move down
-                  </button>
-                  <button
                     className="danger"
                     onClick={() =>
                       setConfig({
@@ -769,7 +726,9 @@ export function App({ client }: { client: Client }) {
                 <p className="hint">
                   {service.adapter === "generic"
                     ? "Generic controls: compatibility depends on the website."
-                    : "Adapter preview: live provider compatibility is still being verified."}
+                    : service.adapter === "prime"
+                      ? "Prime Video controls use its browser keyboard shortcuts. Account, region, and title compatibility still need testing."
+                      : "Adapter preview: live provider compatibility is still being verified."}
                 </p>
               </details>
             ))}
@@ -787,7 +746,6 @@ export function App({ client }: { client: Client }) {
                       adapter: "generic",
                       color: "#5be5bc",
                       enabled: true,
-                      favorite: false,
                       backgroundAudio: false,
                     },
                   ],

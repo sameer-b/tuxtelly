@@ -14,6 +14,14 @@ describe("playback focus", () => {
       isPlaybackSurface(video, document.createElement("div"), "youtube"),
     ).toBe(false);
   });
+  it("recognizes Prime Video's focused player container while preserving control focus", () => {
+    const container = document.createElement("div");
+    const video = document.createElement("video");
+    const control = document.createElement("button");
+    container.append(video, control);
+    expect(isPlaybackSurface(video, container, "prime")).toBe(true);
+    expect(isPlaybackSurface(video, control, "prime")).toBe(false);
+  });
 });
 describe("seeking", () => {
   function video(position: number, pairs: [number, number][]) {

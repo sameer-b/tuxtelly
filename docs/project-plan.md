@@ -108,12 +108,12 @@ Dependencies and exact versions are locked in the workspace. Local use needs no 
 
 - Large service tiles with clear focus and directional navigation.
 - Enter/OK activation and pointer interaction.
-- Ordering, groups, favorites, filtering, and prior-selection restoration.
+- Most-recently-used service ordering, groups, filtering, and prior-selection restoration.
 - Adjustable tile size, spacing, colors, background, text scale, and overscan.
 
 ### F03: Service configuration
 
-- Add, edit, disable, reorder, and remove services.
+- Add, edit, disable, and remove services; place the most recently opened service first.
 - Store stable ID, name, start URL, icon, permitted origins, adapter, and overrides.
 - Recognize known providers and offer a generic adapter for other URLs.
 - Report actual capabilities without implying universal keyboard compatibility.
