@@ -20,3 +20,6 @@ playwright-report/
 # Local Firefox test profiles
 .firefox-profile/
 firefox-profile/
+
+# Local release packages, test screenshots, and logs
+artifacts/

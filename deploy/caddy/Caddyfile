@@ -1,0 +1,14 @@
+# Set TUXTELLY_HOST to a hostname whose certificate Firefox trusts.
+{$TUXTELLY_HOST:localhost} {
+  root * /srv/tuxtelly/current
+  encode zstd gzip
+  file_server
+  header {
+    Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
+    X-Content-Type-Options nosniff
+    Referrer-Policy no-referrer
+    Cache-Control "no-cache"
+  }
+  @assets path /assets/*
+  header @assets Cache-Control "public, max-age=31536000, immutable"
+}

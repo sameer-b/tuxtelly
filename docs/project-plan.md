@@ -1,9 +1,10 @@
 # TuxTelly project plan
 
-Status: **Proposed; implementation approval pending.**
+Status: **Approved; initial preview implemented, release qualification in progress.**
 
-This document preserves the project proposal. The hardware and provider order
-below are user-confirmed; architecture and implementation choices remain proposed.
+This document records the approved project scope. Requirements below describe the
+intended release, including work still pending. For implemented behavior and
+remaining gates, see the implementation roadmap and acceptance checklist.
 
 ## Goal and reference setup
 
@@ -13,7 +14,7 @@ Firefox tabs, retaining their normal authentication and DRM behavior.
 
 Reference setup:
 
-- Fedora 44, KDE, Firefox; exact KDE session and Firefox packaging require inspection.
+- Fedora 44, KDE Wayland, Firefox 156 at `/usr/bin/firefox` (inspected on the laptop).
 - Intel Core i5-1135G7, x86-64, 8 GB RAM.
 - Rii MX3 2.4 GHz air mouse/keyboard remote, identified from the supplied listing.
 - Proxmox VE LXC hosting the frontend.
@@ -33,12 +34,12 @@ flowchart LR
     T <--> S[Streaming providers]
 ```
 
-| Component | Responsibilities |
-| --- | --- |
-| Static launcher | TV home, service configuration, appearance, navigation settings, onboarding, diagnostics |
-| Firefox extension | Tabs, keyboard routing, permissions, adapters, local settings, recovery UI |
-| Fedora/KDE integration | Persistent Firefox profile, autostart, fullscreen window, audio, system media keys |
-| Provider website | Login, profiles, catalog, player, subtitles, playback, and DRM |
+| Component              | Responsibilities                                                                         |
+| ---------------------- | ---------------------------------------------------------------------------------------- |
+| Static launcher        | TV home, service configuration, appearance, navigation settings, onboarding, diagnostics |
+| Firefox extension      | Tabs, keyboard routing, permissions, adapters, local settings, recovery UI               |
+| Fedora/KDE integration | Persistent Firefox profile, autostart, fullscreen window, audio, system media keys       |
+| Provider website       | Login, profiles, catalog, player, subtitles, playback, and DRM                           |
 
 Video goes directly between the laptop and each provider. The LXC serves static
 assets and optional default configuration. It does not proxy video or hold
@@ -68,25 +69,25 @@ with ordinary browser fullscreen. Treat player fullscreen as a separate state;
 Firefox may exit it on tab changes. Kiosk mode is a later, separately tested
 deployment option because it changes browser controls and recovery behavior.
 
-## Proposed technology stack
+## Technology stack
 
-| Area | Choice |
-| --- | --- |
-| Language | TypeScript, strict mode |
-| Launcher | React and Vite |
-| Styling | CSS Modules and CSS custom properties |
-| Extension | WXT, Firefox Manifest V3, WebExtension APIs |
-| Validation | Zod, versioned configuration and message schemas |
-| State | Explicit state machines and React reducers |
-| Persistence | browser.storage.local |
-| Hosting | Caddy, systemd, unprivileged Debian LXC |
-| Desktop integration | KDE autostart/shortcuts, PipeWire/WirePlumber |
-| Build | pnpm workspace, maintained Node.js LTS, locked dependencies |
-| Unit/component tests | Vitest, Testing Library |
-| Firefox integration | Selenium WebDriver, geckodriver |
-| Checks | TypeScript, ESLint, Prettier, web-ext lint |
-| CI/releases | GitHub Actions; static asset and extension artifacts |
-| License | MIT proposed; adoption pending |
+| Area                 | Choice                                                      |
+| -------------------- | ----------------------------------------------------------- |
+| Language             | TypeScript, strict mode                                     |
+| Launcher             | React and Vite                                              |
+| Styling              | Shared CSS and CSS custom properties                        |
+| Extension            | WXT, Firefox Manifest V3, WebExtension APIs                 |
+| Validation           | Zod, versioned configuration and message schemas            |
+| State                | React state and serialized background operations            |
+| Persistence          | browser.storage.local                                       |
+| Hosting              | Caddy, systemd, unprivileged Debian LXC                     |
+| Desktop integration  | KDE autostart/shortcuts, PipeWire/WirePlumber               |
+| Build                | pnpm workspace, maintained Node.js LTS, locked dependencies |
+| Unit/component tests | Vitest, Testing Library                                     |
+| Firefox integration  | Selenium WebDriver, geckodriver                             |
+| Checks               | TypeScript, ESLint, Prettier, web-ext lint                  |
+| CI/releases          | GitHub Actions; static asset and extension artifacts        |
+| License              | MIT (adopted)                                               |
 
 Select and lock exact versions when implementation begins. The static hosting
 runtime does not require Node.js.
@@ -216,22 +217,22 @@ runtime does not require Node.js.
 
 ## Input semantics
 
-| Context/action | Default behavior |
-| --- | --- |
-| Arrows in catalog | Move selection |
-| Arrows in text field | Edit text normally |
-| Left/right in playback mode | Seek |
-| Enter/OK | Activate selected control |
-| Space or Play/Pause outside editing | Toggle playback |
-| Back | Dismiss current overlay/menu, then navigate back within the service |
-| Home | Launcher |
-| Menu | Service switcher |
-| Next/previous service | Activate corresponding managed tab |
-| C outside editing | Captions toggle or caption menu |
-| F outside editing | Player fullscreen |
-| F11 | Firefox browser fullscreen |
-| Volume/mute keys | KDE system volume by default |
-| Tab/Shift+Tab | Standard focus traversal fallback |
+| Context/action                      | Default behavior                                                    |
+| ----------------------------------- | ------------------------------------------------------------------- |
+| Arrows in catalog                   | Move selection                                                      |
+| Arrows in text field                | Edit text normally                                                  |
+| Left/right in playback mode         | Seek                                                                |
+| Enter/OK                            | Activate selected control                                           |
+| Space or Play/Pause outside editing | Toggle playback                                                     |
+| Back                                | Dismiss current overlay/menu, then navigate back within the service |
+| Home                                | Launcher                                                            |
+| Menu                                | Service switcher                                                    |
+| Next/previous service               | Activate corresponding managed tab                                  |
+| C outside editing                   | Captions toggle or caption menu                                     |
+| F outside editing                   | Player fullscreen                                                   |
+| F11                                 | Firefox browser fullscreen                                          |
+| Volume/mute keys                    | KDE system volume by default                                        |
+| Tab/Shift+Tab                       | Standard focus traversal fallback                                   |
 
 Finalize physical mappings after calibration. Prevent one Back press from both
 dismissing a dialog and leaving the page. Browser-reserved keys and OS-consumed
@@ -249,10 +250,10 @@ Ship a generic HTML adapter and provider adapters in the agreed priority order.
 Publish a dated matrix of browsing, search, playback, seek, captions, fullscreen,
 and switching results, including relevant browser, region, and account variants.
 
-| Level | Meaning |
-| --- | --- |
-| Launch | Open, reuse, switch, return home |
-| Generic | Best-effort navigation and accessible HTML media controls |
+| Level           | Meaning                                                        |
+| --------------- | -------------------------------------------------------------- |
+| Launch          | Open, reuse, switch, return home                               |
+| Generic         | Best-effort navigation and accessible HTML media controls      |
 | Provider-tested | Documented navigation and playback flows pass on that provider |
 
 Synthetic keyboard events are not a universal control strategy. Use DOM/media
@@ -265,28 +266,28 @@ downloaded JavaScript.
 
 Performance values below are proposed measurement targets, not verified claims.
 
-| Area | Requirement |
-| --- | --- |
-| Input latency | Visible navigation feedback within 100 ms at p95 on reference laptop |
-| Warm switching | Activate an already-loaded tab within 300 ms, excluding provider/network rendering |
-| Launcher startup | Target interactive launcher within one second on LAN after assets are available |
-| Memory | Lazy tabs, separately measured project overhead, optional inactive-tab unloading |
-| CPU | Event-driven updates and bounded observers; avoid continuous full-DOM scans |
-| Display | 1080p/4K desktop layouts, scaling, overscan, couch viewing |
-| Accessibility | Clear focus, contrast, keyboard-complete owned UI, reduced motion, accessible names |
-| Reliability | Recover from browser/tab/server/permission/adapter failures |
-| Endurance | Eight-hour viewing/switching soak without progressive failure or unbounded growth |
-| Privacy | Provider credentials stay in Firefox; sensitive input/session/viewing data excluded from logs |
-| Telemetry | No default analytics or external application telemetry |
-| Permissions | Request needed configured origins, avoid unrelated browsing access |
-| Messaging | Validate schema, sender, origin, and managed-tab membership |
-| Security | Restrictive content policy, validated URLs/config, bundled code, controlled assets |
-| Compatibility | Fedora 44/current Firefox reference; publish minimum version and assess ESR |
-| Maintainability | Isolated adapters, documented interfaces, navigation regression fixtures |
-| Upgrades | Versioned protocols/schema, migrations, last-valid state, rollback |
-| Distribution | Static build, installable extension, checksums, source/build instructions |
-| Operations | Install, HTTPS, backup, restore, update, troubleshooting, removal documentation |
-| Open source | License decision, contribution guide, security reporting, templates, changelog |
+| Area             | Requirement                                                                                   |
+| ---------------- | --------------------------------------------------------------------------------------------- |
+| Input latency    | Visible navigation feedback within 100 ms at p95 on reference laptop                          |
+| Warm switching   | Activate an already-loaded tab within 300 ms, excluding provider/network rendering            |
+| Launcher startup | Target interactive launcher within one second on LAN after assets are available               |
+| Memory           | Lazy tabs, separately measured project overhead, optional inactive-tab unloading              |
+| CPU              | Event-driven updates and bounded observers; avoid continuous full-DOM scans                   |
+| Display          | 1080p/4K desktop layouts, scaling, overscan, couch viewing                                    |
+| Accessibility    | Clear focus, contrast, keyboard-complete owned UI, reduced motion, accessible names           |
+| Reliability      | Recover from browser/tab/server/permission/adapter failures                                   |
+| Endurance        | Eight-hour viewing/switching soak without progressive failure or unbounded growth             |
+| Privacy          | Provider credentials stay in Firefox; sensitive input/session/viewing data excluded from logs |
+| Telemetry        | No default analytics or external application telemetry                                        |
+| Permissions      | Request needed configured origins, avoid unrelated browsing access                            |
+| Messaging        | Validate schema, sender, origin, and managed-tab membership                                   |
+| Security         | Restrictive content policy, validated URLs/config, bundled code, controlled assets            |
+| Compatibility    | Fedora 44/current Firefox reference; publish minimum version and assess ESR                   |
+| Maintainability  | Isolated adapters, documented interfaces, navigation regression fixtures                      |
+| Upgrades         | Versioned protocols/schema, migrations, last-valid state, rollback                            |
+| Distribution     | Static build, installable extension, checksums, source/build instructions                     |
+| Operations       | Install, HTTPS, backup, restore, update, troubleshooting, removal documentation               |
+| Open source      | License decision, contribution guide, security reporting, templates, changelog                |
 
 Measure streaming quality and decode performance independently. Firefox, codecs,
 drivers, provider policy, and account support affect playback. 4K UI

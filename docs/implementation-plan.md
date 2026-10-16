@@ -1,9 +1,32 @@
 # TuxTelly implementation roadmap
 
-Status: **Proposed; implementation approval pending.**
+Status: **Approved and in progress. Initial preview implemented.**
 
-Repository creation and documentation do not imply approval to begin application
-implementation. The confirmed provider order is YouTube, Netflix, Disney+, HBO Max.
+The confirmed provider order is YouTube, Netflix, Disney+, HBO Max. Implementation
+was approved by the project owner. The following phases retain the full release
+scope; the initial preview does not satisfy all exit criteria.
+
+## Current progress
+
+- Phase 0: Fedora/Wayland/Firefox environment inspected; isolated browser checks pass.
+  Physical remote, HDMI, real accounts, and DRM checks remain pending.
+- Phase 1: workspace, MIT license, schemas, build/check tooling, CI workflow,
+  catalog/text-entry/video fixtures implemented. Advanced dynamic-row fixtures remain.
+- Phase 2: launcher settings, origin permissions, managed tabs, duplicate prevention,
+  closed-tab recovery, and offline Home implemented and fixture-tested. Actual browser
+  restart/session restoration and upgrade acceptance remain pending.
+- Phase 3: generic navigation, remote calibration, configurable keys, switcher,
+  pause/mute policy, and HTML video controls implemented. Nine live YouTube public-video
+  checks pass, including a regression fix for focused player wrappers. Full YouTube qualification,
+  virtualized catalogs, and additional focus restoration remain.
+- Phases 4–5: initial provider selector hooks exist; Netflix, Disney+, and HBO Max
+  support is unverified and requires account-based implementation/acceptance.
+- Phase 6: Caddy configuration, Fedora diagnostics/autostart template, packaging, and
+  installation documentation exist. LXC deployment, signing, performance/soak tests,
+  and release qualification remain pending.
+
+Controlled tests: 20 local unit tests and 15 Firefox integration checks on the
+reference Fedora laptop passed. See [acceptance](acceptance.md) for detailed boundaries.
 
 ## Phase 0: Prove browser and remote assumptions
 
@@ -105,26 +128,21 @@ release installations require signed extensions, including self-distributed ones
 - Document actual test results for all four providers on the reference setup.
 - Install from documented artifacts without depending on a temporary development extension.
 
-## Proposed source layout
+## Current source layout
 
 ```text
 apps/
   launcher/
   extension/
 packages/
-  config/
-  protocol/
-  input/
-  navigation/
+  core/
   adapters/
   ui/
 tests/
   fixtures/
   firefox/
-  acceptance/
 deploy/
   caddy/
-  lxc/
 integrations/
   fedora/
 docs/

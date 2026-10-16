@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=TuxTelly
+Comment=Start the dedicated Firefox TV profile
+# Create the TuxTelly profile in Firefox first, then substitute your launcher URL.
+Exec=firefox --no-remote -P TuxTelly https://tv.home.example/
+Terminal=false
+X-GNOME-Autostart-enabled=true

@@ -1,0 +1,6 @@
+pnpm-lock.yaml
+**/.output
+**/.wxt
+**/dist
+artifacts
+node_modules

@@ -1,0 +1,22 @@
+{
+  "name": "@tuxtelly/extension",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wxt -b firefox --mv3",
+    "build": "wxt build -b firefox --mv3",
+    "prepare": "wxt prepare"
+  },
+  "dependencies": {
+    "@tuxtelly/core": "workspace:*",
+    "@tuxtelly/ui": "workspace:*",
+    "@tuxtelly/adapters": "workspace:*",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "wxt": "0.21.4",
+    "@wxt-dev/module-react": "1.2.2"
+  }
+}
