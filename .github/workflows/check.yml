@@ -1,0 +1,36 @@
+name: Check
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install --global pnpm@12.11.2
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm check
+      - uses: browser-actions/setup-firefox@v1
+        id: firefox
+      - run: pnpm test:firefox
+        env:
+          FIREFOX_BINARY: ${{ steps.firefox.outputs.firefox-path }}
+      - run: pnpm package
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tuxtelly-preview
+          path: |
+            artifacts/*.tar.gz
+            artifacts/*-unsigned.zip
+            artifacts/SHA256SUMS
+            artifacts/firefox-results.json
+            artifacts/*.png
+          retention-days: 14
