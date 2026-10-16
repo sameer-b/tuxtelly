@@ -12,18 +12,18 @@ scope; the initial preview does not satisfy all exit criteria.
   Physical remote, HDMI, real accounts, and DRM checks remain pending.
 - Phase 1: workspace, MIT license, schemas, build/check tooling, CI workflow,
   catalog/text-entry/video fixtures implemented. Advanced dynamic-row fixtures remain.
-- Phase 2: launcher settings, origin permissions, managed tabs, duplicate prevention,
-  closed-tab recovery, and offline Home implemented and fixture-tested. Actual browser
-  restart/session restoration and upgrade acceptance remain pending.
+- Phase 2: local Home settings, origin permissions, managed tabs, duplicate prevention,
+  closed-tab recovery, and bundled local Home implemented and fixture-tested. No runtime
+  server is required for one TV. Persistent installation/restart acceptance remains pending.
 - Phase 3: generic navigation, remote calibration, configurable keys, switcher,
   pause/mute policy, and HTML video controls implemented. Nine live YouTube public-video
   checks pass, including a regression fix for focused player wrappers. Full YouTube qualification,
   virtualized catalogs, and additional focus restoration remain.
 - Phases 4–5: initial provider selector hooks exist; Netflix, Disney+, and HBO Max
   support is unverified and requires account-based implementation/acceptance.
-- Phase 6: Caddy configuration, Fedora diagnostics/autostart template, packaging, and
-  installation documentation exist. LXC deployment, signing, performance/soak tests,
-  and release qualification remain pending.
+- Phase 6: Fedora diagnostics, local preview script, packaging, and installation
+  documentation exist. Extension signing, performance/soak tests, and release
+  qualification remain pending; Caddy/LXC is optional for later multi-TV sharing.
 
 Controlled tests: 20 local unit tests and 15 Firefox integration checks on the
 reference Fedora laptop passed. See [acceptance](acceptance.md) for detailed boundaries.
@@ -49,11 +49,11 @@ blockers. Physical remote checks and account login require the actual TV setup.
 Exit: reproducible launcher/extension builds, validated communication, and passing
 configuration/protocol tests.
 
-## Phase 2: Launcher and tab manager
+## Phase 2: Local Home and tab manager
 
-- Service CRUD, ordering, home navigation, persistence, and origin permission setup.
+- Bundled local Home, service CRUD/order, profile persistence, and site-permission setup.
 - Lazy tab creation, idempotent launch, existing-tab activation, and restart reconciliation.
-- Service switching, extension-command Home, and bundled recovery launcher.
+- Service switching, extension-command Home, and local bundled recovery.
 - Validate imports and handle frontend/extension version mismatches.
 
 Exit: add services in the UI, open each once, switch without duplicates, and retain
@@ -90,10 +90,11 @@ integration. Do not silently reduce the agreed scope.
 
 ## Phase 6: Packaging, deployment, and release qualification
 
-- Complete Caddy/LXC hosting and reversible Fedora/KDE installation documentation.
+- Complete signed local installation and reversible Fedora/KDE setup documentation.
+- Keep Caddy/LXC hosting optional for multi-TV sharing.
 - Build release artifacts, checksums, source packages, and upgrade/rollback instructions.
 - Prepare a Mozilla-signed extension for normal Firefox installations.
-- Validate backup/restore, server outage, lost permissions, browser restart, and tab crash recovery.
+- Validate backup/restore, local profile and extension restart, lost permissions, browser restart, and tab crash recovery.
 - Measure latency, CPU/memory, accessibility, and an eight-hour viewing/switching soak.
 - Complete contribution, adapter, troubleshooting, and compatibility documentation.
 
@@ -124,7 +125,7 @@ release installations require signed extensions, including self-distributed ones
 - Use available playback, seeking, subtitle, volume, and fullscreen controls.
 - Switch services without conflicting audio and return without unnecessary page resets.
 - Restart Firefox without losing configuration or creating duplicate service tabs.
-- Recover when hosting or a provider adapter is unavailable.
+- Recover when a provider adapter is unavailable.
 - Document actual test results for all four providers on the reference setup.
 - Install from documented artifacts without depending on a temporary development extension.
 

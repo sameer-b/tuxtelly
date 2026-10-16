@@ -2,19 +2,19 @@
 
 Your streaming services, one Linux TV remote.
 
-TuxTelly is an MIT-licensed, self-hosted TV frontend for Linux. Its remote-friendly
-launcher and Firefox extension manage streaming services in ordinary Firefox tabs.
-Provider logins and DRM stay in Firefox on the TV laptop; the server serves static
-files and never handles streaming credentials or video.
+TuxTelly is an MIT-licensed Linux TV frontend that runs locally in Firefox. Its
+companion extension provides the Home screen, service tabs, remote navigation, and
+player controls. It needs no web server or PVE container for a single TV. Provider
+logins and DRM stay in ordinary Firefox tabs on the TV laptop.
 
 ## Project status
 
 **Initial development preview.** The approved plan is being implemented in one
-private monorepo. Public release and extension signing remain pending.
+private monorepo. Public release and persistent extension signing remain pending.
 
 The preview includes a customizable launcher, service settings, keyboard mapping
 and calibration, managed tabs, an in-page switcher, generic spatial navigation,
-HTML video controls, optional site permissions, and a bundled offline launcher.
+HTML video controls, optional site permissions, and a bundled Home screen.
 
 Local checks pass 20 unit tests; 15 Firefox integration checks pass on the
 reference Fedora 44 laptop with Firefox 156. These establish fixture behavior,
@@ -23,26 +23,33 @@ passes 9 checks covering public playback, search, controls, and tab switching.
 Netflix, Disney+, HBO Max, and signed-in YouTube flows remain unverified.
 See [test status](docs/acceptance.md).
 
-## Try the preview
+## Try the local preview
 
-Use Node.js 24 LTS and pnpm 12.11.2:
+Use Node.js 24 LTS and pnpm 12.11.2 to build it:
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm check
-pnpm dev
+pnpm build
+pnpm package
 ```
 
 Load `apps/extension/.output/firefox-mv3/manifest.json` through Firefox's
-`about:debugging` temporary add-on loader. Open the extension's Settings, save and
-trust the launcher address (`http://127.0.0.1:5173/` locally), and grant access to
-the services you want to control. Log in directly on each provider's website.
+`about:debugging` temporary add-on loader. Open TuxTelly from Firefox's Extensions
+menu; its Home screen is bundled in the extension. Settings, service definitions,
+and permissions are stored in that Firefox profile. Grant access only to the
+streaming sites you want TuxTelly to control, then sign in on each provider's page.
 
-Temporary add-ons disappear after Firefox restarts. Persistent installation needs
-a Mozilla-signed extension; the preview package is unsigned.
+For your Fedora TV laptop, use the [preview setup instructions](docs/installation.md).
+Temporary add-ons disappear when Firefox restarts. Persistent installation needs
+a Mozilla-signed extension; the preview package is unsigned. A signed install opens
+Home when Firefox starts, so no launcher URL or server startup is needed.
 
-- [Installation, Fedora setup, and PVE LXC hosting](docs/installation.md)
-- [Architecture, technology stack, and requirements](docs/project-plan.md)
+A static launcher that can be served from another machine remains optional for
+multi-TV setups. PVE, Caddy, a database, and a Node server are not needed for local
+use.
+
+- [Architecture and requirements](docs/project-plan.md)
 - [Implementation progress and roadmap](docs/implementation-plan.md)
 - [Hardware and provider acceptance checklist](docs/acceptance.md)
 - [Contributing](CONTRIBUTING.md)
@@ -69,25 +76,26 @@ depend on the website and require permission plus a compatible adapter.
 
 - Fedora 44, KDE Wayland, Firefox; Intel i5-1135G7, x86-64, 8 GB RAM.
 - Rii MX3 2.4 GHz air mouse and keyboard remote, pending physical calibration.
-- Static hosting in a Proxmox VE unprivileged LXC, pending deployment validation.
+- One local Firefox profile; optional static hosting only for multiple TVs.
 - Provider implementation and testing order: YouTube, Netflix, Disney+, HBO Max.
 
 ## Repository layout
 
 ```text
-apps/launcher/       React + Vite hosted launcher
-apps/extension/      WXT Firefox extension and bundled launcher
-packages/core/       Configuration, protocol, input, geometry, tab coordination
-packages/adapters/   Generic controls and initial provider hooks
-packages/ui/         Shared launcher, settings, and remote calibration
-tests/              Local video fixtures and Firefox integration checks
-deploy/caddy/       Static hosting configuration
-integrations/fedora/ Read-only diagnostics and autostart template
-docs/               Requirements, installation, and acceptance status
+apps/launcher/        Optional React + Vite hosted launcher
+apps/extension/       WXT Firefox extension and bundled local Home screen
+packages/core/        Configuration, protocol, input, geometry, tab coordination
+packages/adapters/    Generic controls and initial provider hooks
+packages/ui/          Shared launcher, settings, and remote calibration
+tests/                Local video fixtures and Firefox integration checks
+deploy/caddy/         Optional static hosting configuration
+integrations/fedora/  Read-only diagnostics and local preview launcher
+docs/                 Requirements, installation, and acceptance status
 ```
 
-Run `pnpm test:firefox` after building to test with an isolated Firefox profile.
-Run `pnpm package` to create launcher and unsigned extension archives with checksums.
+`pnpm test:firefox` exercises the extension with an isolated Firefox profile.
+`pnpm test:youtube` runs an opt-in live-site check. `pnpm package` creates the
+extension archive plus an optional hosted-launcher archive and checksums.
 
 TuxTelly is independent of the streaming providers. Provider names identify
 intended integrations and do not imply endorsement or verified compatibility.

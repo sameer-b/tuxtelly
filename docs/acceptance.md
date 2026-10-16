@@ -54,9 +54,9 @@ Additional gates:
 - [ ] Verify HDMI audio and system volume without duplicate player adjustments.
 - [ ] Check fullscreen on the TV, overscan, text size, and focus visibility.
 - [ ] Verify suspend/resume and configured lid behavior.
-- [ ] Exercise closed/crashed tabs, revoked permissions, and host outage recovery.
+- [ ] Exercise closed/crashed tabs, revoked permissions, and bundled Home recovery (no host is required for local use).
 - [ ] Verify a Mozilla-signed persistent extension survives restart.
-- [ ] Deploy to a real unprivileged PVE LXC and exercise upgrade/rollback.
+- [ ] Optional multi-TV distribution: deploy a real unprivileged PVE LXC and exercise upgrade/rollback.
 - [ ] Measure input/switch latency and CPU/memory against the plan.
 - [ ] Complete an eight-hour viewing and switching session.
 

@@ -357,6 +357,9 @@ export default defineBackground(() => {
       .then(() => home())
       .catch(() => browser.runtime.openOptionsPage());
   });
+  browser.runtime.onStartup.addListener(() => {
+    void ready.then(() => home()).catch(() => undefined);
+  });
   browser.commands.onCommand.addListener((command) => {
     void ready
       .then(async () => {
