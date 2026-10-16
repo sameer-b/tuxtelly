@@ -2,7 +2,8 @@
 Type=Application
 Name=TuxTelly
 Comment=Start the dedicated Firefox TV profile
-# Create the TuxTelly profile in Firefox first, then substitute your launcher URL.
-Exec=firefox --no-remote -P TuxTelly https://tv.home.example/
+# Create the TuxTelly Firefox profile and install a persistent signed add-on first.
+# Once that add-on is installed, it opens the bundled Home when Firefox starts.
+Exec=firefox --no-remote -P TuxTelly
 Terminal=false
 X-GNOME-Autostart-enabled=true

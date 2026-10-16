@@ -310,7 +310,7 @@ export function App({ client }: { client: Client }) {
             </span>
             <div>
               <h3>A little more living room.</h3>
-              <p>Powered by Linux. Hosted by you.</p>
+              <p>Powered by Linux. Ready for the sofa.</p>
             </div>
             <span className="pill">OPEN SOURCE</span>
           </div>
@@ -325,19 +325,8 @@ export function App({ client }: { client: Client }) {
           </p>
           <section className="panel">
             <h2>Home & display</h2>
-            <label>
-              Hosted launcher address
-              <input
-                value={config.launcherUrl}
-                placeholder="https://tv.home.example/"
-                onChange={(event) =>
-                  setConfig({ ...config, launcherUrl: event.target.value })
-                }
-              />
-            </label>
             <p className="hint">
-              Leave empty to use the bundled home screen. Trust the address
-              below after saving.
+              TuxTelly runs from this Firefox profile. No web server is needed.
             </p>
             <div className="form-row">
               <label>
@@ -412,32 +401,49 @@ export function App({ client }: { client: Client }) {
               />
               Keep the managed Firefox window fullscreen
             </label>
-            {config.launcherUrl && (
-              <button
-                onClick={() => {
-                  try {
-                    void client
-                      .grant?.([originPattern(config.launcherUrl)])
-                      .then((granted) => {
-                        setMessage(
-                          granted
-                            ? "Launcher access granted. Save settings, then reload the launcher."
-                            : "Access was not granted.",
-                        );
-                      })
-                      .catch(() =>
-                        setMessage(
-                          "Could not grant launcher access. Try again from extension settings.",
-                        ),
-                      );
-                  } catch {
-                    setMessage("Enter a valid launcher address.");
+            <details className="service-settings">
+              <summary>Optional: use a network-hosted launcher</summary>
+              <label>
+                Hosted launcher address
+                <input
+                  value={config.launcherUrl}
+                  placeholder="https://tv.home.example/"
+                  onChange={(event) =>
+                    setConfig({ ...config, launcherUrl: event.target.value })
                   }
-                }}
-              >
-                Trust launcher address
-              </button>
-            )}
+                />
+              </label>
+              <p className="hint">
+                This is only useful when serving the launcher to multiple TVs.
+                Leave it empty for local use.
+              </p>
+              {config.launcherUrl && (
+                <button
+                  onClick={() => {
+                    try {
+                      void client
+                        .grant?.([originPattern(config.launcherUrl)])
+                        .then((granted) => {
+                          setMessage(
+                            granted
+                              ? "Launcher access granted. Save settings, then reload the launcher."
+                              : "Access was not granted.",
+                          );
+                        })
+                        .catch(() =>
+                          setMessage(
+                            "Could not grant launcher access. Try again from extension settings.",
+                          ),
+                        );
+                    } catch {
+                      setMessage("Enter a valid launcher address.");
+                    }
+                  }}
+                >
+                  Trust launcher address
+                </button>
+              )}
+            </details>
           </section>
           <section className="panel">
             <h2>Services</h2>

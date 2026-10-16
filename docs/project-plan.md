@@ -17,7 +17,7 @@ Reference setup:
 - Fedora 44, KDE Wayland, Firefox 156 at `/usr/bin/firefox` (inspected on the laptop).
 - Intel Core i5-1135G7, x86-64, 8 GB RAM.
 - Rii MX3 2.4 GHz air mouse/keyboard remote, identified from the supplied listing.
-- Proxmox VE LXC hosting the frontend.
+- Local Firefox extension; optional Proxmox VE static hosting only if one shared launcher is later useful across TVs.
 - Provider priority: YouTube, Netflix, Disney+, HBO Max.
 
 ## Architecture
@@ -28,35 +28,37 @@ flowchart LR
     K --> H[Firefox home tab]
     K --> T[Firefox service tabs]
     K --> A[System volume / HDMI audio]
-    P[PVE LXC: static launcher] --> H
+    P[PVE optional: shared static launcher] -. optional .-> H
     H <--> E[Firefox companion extension]
     E <--> T
     T <--> S[Streaming providers]
 ```
 
-| Component              | Responsibilities                                                                         |
-| ---------------------- | ---------------------------------------------------------------------------------------- |
-| Static launcher        | TV home, service configuration, appearance, navigation settings, onboarding, diagnostics |
-| Firefox extension      | Tabs, keyboard routing, permissions, adapters, local settings, recovery UI               |
-| Fedora/KDE integration | Persistent Firefox profile, autostart, fullscreen window, audio, system media keys       |
-| Provider website       | Login, profiles, catalog, player, subtitles, playback, and DRM                           |
+| Component                | Responsibilities                                                                         |
+| ------------------------ | ---------------------------------------------------------------------------------------- |
+| Bundled Firefox Home     | TV home, service configuration, appearance, navigation settings, onboarding, diagnostics |
+| Firefox extension        | Tabs, keyboard routing, permissions, adapters, local settings, recovery UI               |
+| Optional hosted launcher | Shared static UI for multiple TVs; not needed for local playback                         |
+| Fedora/KDE integration   | Persistent Firefox profile, autostart, fullscreen window, audio, system media keys       |
+| Provider website         | Login, profiles, catalog, player, subtitles, playback, and DRM                           |
 
-Video goes directly between the laptop and each provider. The LXC serves static
-assets and optional default configuration. It does not proxy video or hold
-streaming credentials.
+Video goes directly between the laptop and each provider. The local extension
+contains the Home UI, configuration, and controls. No server, database, LAN, or
+remote host is required. If several TVs later need a shared launcher, an optional
+static host can serve the same UI; it never proxies video or holds credentials.
 
 ### Why an extension is required
 
-A hosted page cannot reliably inspect and control other origins' tabs because of
-browser security boundaries. The extension supplies permitted content scripts and
-browser tab/window APIs. Adding a URL can enable launching and generic navigation;
+Firefox pages cannot reliably inspect and control other origins' tabs because of
+browser security boundaries. The extension supplies the Home UI, permitted content
+scripts, and browser tab/window APIs. Adding a service URL enables launching;
 reliable provider controls require adapters and validation.
 
 ### Configuration ownership
 
-- Extension local storage is authoritative for device settings.
-- An optional hosted JSON document supplies shared defaults.
-- Local customizations take precedence and are not silently overwritten.
+- Extension local storage is authoritative for device settings in Firefox.
+- Local profile storage covers single-TV use and keeps settings on the TV.
+- Optional shared hosted defaults may be added for multi-TV setups later.
 - Imports are validated and migrated; retain the last valid configuration.
 - JSON export/import provides backups and transfer between TVs.
 - Automatic synchronization across TVs is deferred.
@@ -74,13 +76,14 @@ deployment option because it changes browser controls and recovery behavior.
 | Area                 | Choice                                                      |
 | -------------------- | ----------------------------------------------------------- |
 | Language             | TypeScript, strict mode                                     |
-| Launcher             | React and Vite                                              |
+| Local interface      | React UI bundled inside the Firefox extension               |
+| Optional web UI      | React and Vite for a shared network launcher                |
 | Styling              | Shared CSS and CSS custom properties                        |
 | Extension            | WXT, Firefox Manifest V3, WebExtension APIs                 |
 | Validation           | Zod, versioned configuration and message schemas            |
 | State                | React state and serialized background operations            |
 | Persistence          | browser.storage.local                                       |
-| Hosting              | Caddy, systemd, unprivileged Debian LXC                     |
+| Optional hosting     | Caddy static files in an unprivileged Debian LXC            |
 | Desktop integration  | KDE autostart/shortcuts, PipeWire/WirePlumber               |
 | Build                | pnpm workspace, maintained Node.js LTS, locked dependencies |
 | Unit/component tests | Vitest, Testing Library                                     |
@@ -89,15 +92,14 @@ deployment option because it changes browser controls and recovery behavior.
 | CI/releases          | GitHub Actions; static asset and extension artifacts        |
 | License              | MIT (adopted)                                               |
 
-Select and lock exact versions when implementation begins. The static hosting
-runtime does not require Node.js.
+Dependencies and exact versions are locked in the workspace. Local use needs no server runtime. Optional static hosting does not require Node.js.
 
 ## Functional requirements
 
 ### F01: Installation and onboarding
 
 - Detect the extension and verify the launcher/extension protocol version.
-- Configure and trust the launcher origin through the extension.
+- Open the bundled Home screen; no launcher origin or network host is required.
 - Add services and request their necessary origin permissions.
 - Calibrate the remote and explain unavailable or OS-consumed keys.
 - Document a persistent Firefox TV profile and direct provider login/MFA.
@@ -192,7 +194,7 @@ runtime does not require Node.js.
 - Configure keys, navigation wrapping, scrolling, seek steps, appearance, and service order.
 - Validate and version configuration imports and exports.
 - Migrate settings, retain last-valid configuration, and restore defaults.
-- Keep server defaults and local overrides predictable.
+- Keep local settings authoritative; define precedence if shared defaults are introduced.
 
 ### F14: Diagnostics
 
@@ -203,8 +205,8 @@ runtime does not require Node.js.
 
 ### F15: Failure recovery
 
-- Existing service controls continue when the LXC is unavailable.
-- Bundle a recovery launcher and cache the last valid configuration in the extension.
+- All local service controls continue without any server or network launcher.
+- Bundle Home and retain the last valid configuration in the extension.
 - Handle revoked permissions, missing players, changed DOM, and protocol mismatches.
 - Provide a route home even when an adapter fails.
 
@@ -266,43 +268,47 @@ downloaded JavaScript.
 
 Performance values below are proposed measurement targets, not verified claims.
 
-| Area             | Requirement                                                                                   |
-| ---------------- | --------------------------------------------------------------------------------------------- |
-| Input latency    | Visible navigation feedback within 100 ms at p95 on reference laptop                          |
-| Warm switching   | Activate an already-loaded tab within 300 ms, excluding provider/network rendering            |
-| Launcher startup | Target interactive launcher within one second on LAN after assets are available               |
-| Memory           | Lazy tabs, separately measured project overhead, optional inactive-tab unloading              |
-| CPU              | Event-driven updates and bounded observers; avoid continuous full-DOM scans                   |
-| Display          | 1080p/4K desktop layouts, scaling, overscan, couch viewing                                    |
-| Accessibility    | Clear focus, contrast, keyboard-complete owned UI, reduced motion, accessible names           |
-| Reliability      | Recover from browser/tab/server/permission/adapter failures                                   |
-| Endurance        | Eight-hour viewing/switching soak without progressive failure or unbounded growth             |
-| Privacy          | Provider credentials stay in Firefox; sensitive input/session/viewing data excluded from logs |
-| Telemetry        | No default analytics or external application telemetry                                        |
-| Permissions      | Request needed configured origins, avoid unrelated browsing access                            |
-| Messaging        | Validate schema, sender, origin, and managed-tab membership                                   |
-| Security         | Restrictive content policy, validated URLs/config, bundled code, controlled assets            |
-| Compatibility    | Fedora 44/current Firefox reference; publish minimum version and assess ESR                   |
-| Maintainability  | Isolated adapters, documented interfaces, navigation regression fixtures                      |
-| Upgrades         | Versioned protocols/schema, migrations, last-valid state, rollback                            |
-| Distribution     | Static build, installable extension, checksums, source/build instructions                     |
-| Operations       | Install, HTTPS, backup, restore, update, troubleshooting, removal documentation               |
-| Open source      | License decision, contribution guide, security reporting, templates, changelog                |
+| Area             | Requirement                                                                                      |
+| ---------------- | ------------------------------------------------------------------------------------------------ |
+| Input latency    | Visible navigation feedback within 100 ms at p95 on reference laptop                             |
+| Warm switching   | Activate an already-loaded tab within 300 ms, excluding provider/network rendering               |
+| Launcher startup | Target interactive local Home within one second after Firefox is ready                           |
+| Memory           | Lazy tabs, separately measured project overhead, optional inactive-tab unloading                 |
+| CPU              | Event-driven updates and bounded observers; avoid continuous full-DOM scans                      |
+| Display          | 1080p/4K desktop layouts, scaling, overscan, couch viewing                                       |
+| Accessibility    | Clear focus, contrast, keyboard-complete owned UI, reduced motion, accessible names              |
+| Reliability      | Recover from browser/tab/permission/adapter failures; local use has no server dependency         |
+| Endurance        | Eight-hour viewing/switching soak without progressive failure or unbounded growth                |
+| Privacy          | Provider credentials stay in Firefox; sensitive input/session/viewing data excluded from logs    |
+| Telemetry        | No default analytics or external application telemetry                                           |
+| Permissions      | Request needed configured origins, avoid unrelated browsing access                               |
+| Messaging        | Validate schema, sender, origin, and managed-tab membership                                      |
+| Security         | Restrictive content policy, validated URLs/config, bundled code, controlled assets               |
+| Compatibility    | Fedora 44/current Firefox reference; publish minimum version and assess ESR                      |
+| Maintainability  | Isolated adapters, documented interfaces, navigation regression fixtures                         |
+| Upgrades         | Versioned protocols/schema, migrations, last-valid state, rollback                               |
+| Distribution     | Installable extension, checksums, source/build instructions; optional static UI for multi-TV use |
+| Operations       | Install, backup, restore, update, troubleshooting, removal; HTTPS only for optional hosted UI    |
+| Open source      | License decision, contribution guide, security reporting, templates, changelog                   |
 
 Measure streaming quality and decode performance independently. Firefox, codecs,
 drivers, provider policy, and account support affect playback. 4K UI
 support does not promise 4K provider playback.
 
-## Deployment
+## Local installation and optional shared hosting
 
-Start with an unprivileged Debian LXC: 1 vCPU, 512 MB RAM, 4 GB disk. Serve compiled
-assets through Caddy, with HTTPS trusted by the TV's Firefox profile. Use versioned
-release directories, a static health/version resource, and rollback instructions.
-Back up hosted defaults and exported device settings separately.
+The primary setup installs TuxTelly in a dedicated persistent Firefox profile on
+the Fedora laptop. Service settings and authentication stay in that profile. The TV
+needs no server process, database, PVE container, LAN address, or TLS certificate.
 
-The container needs neither GPU nor remote USB access. Laptop setup covers the
-Firefox profile, DRM/codec verification, HDMI audio, KDE autostart, mappings,
-sleep/lid behavior, fullscreen recovery, and reversible desktop configuration.
+If multi-TV sharing becomes useful, host the static launcher with Caddy in an
+unprivileged Debian LXC. A starter allocation is 1 vCPU, 512 MB RAM, and 4 GB disk;
+use a network hostname with HTTPS trusted by each TV. The optional container needs
+neither GPU nor remote USB access.
+
+Laptop setup covers Firefox installation/signing, DRM/codecs, HDMI audio, KDE
+autostart, mappings, sleep/lid behavior, fullscreen recovery, and reversible
+desktop configuration.
 
 ## Scope after the first complete release
 
