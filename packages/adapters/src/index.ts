@@ -39,22 +39,6 @@ export function seek(video: HTMLVideoElement, delta: number): Result {
   video.currentTime = target;
   return { ok: true };
 }
-export function isPlaybackSurface(
-  video: HTMLVideoElement,
-  selected: Element | null,
-  adapter: Service["adapter"],
-): boolean {
-  return (
-    selected === document.body ||
-    selected === video ||
-    (selected instanceof Element &&
-      selected.contains(video) &&
-      !selected.matches(
-        'a,button,input,select,textarea,[role="button"],[role="link"]',
-      ) &&
-      (adapter === "youtube" || adapter === "prime"))
-  );
-}
 const selectors: Record<
   Service["adapter"],
   { captions: string; fullscreen: string }
@@ -158,66 +142,6 @@ export async function playerAction(
     };
   }
 }
-function focusables(): HTMLElement[] {
-  const dialog = [
-    ...document.querySelectorAll<HTMLElement>(
-      'dialog[open], [role="dialog"][aria-modal="true"]',
-    ),
-  ].find((el) => el.getBoundingClientRect().width > 0);
-  const selector =
-    'a[href],button,input:not([type="hidden"]),select,textarea,iframe,[role="button"],[role="link"],[tabindex]';
-  const found: HTMLElement[] = [];
-  const visit = (root: ParentNode) => {
-    for (const child of root.children) {
-      if (child instanceof HTMLElement && child.matches(selector)) {
-        if (
-          child.tabIndex >= 0 &&
-          !isHidden(child) &&
-          !child.matches(':disabled,[aria-disabled="true"]') &&
-          child.getBoundingClientRect().width > 0 &&
-          child.getBoundingClientRect().height > 0 &&
-          getComputedStyle(child).visibility !== "hidden"
-        )
-          found.push(child);
-      }
-      if (child.shadowRoot) visit(child.shadowRoot);
-      visit(child);
-    }
-  };
-  const isHidden = (el: HTMLElement) => {
-    let current: Element | null = el;
-    while (current) {
-      if (current.matches('[inert],[hidden],[aria-hidden="true"]')) return true;
-      const parent: Element | null = current.parentElement;
-      current =
-        parent ??
-        (current.getRootNode() instanceof ShadowRoot
-          ? (current.getRootNode() as ShadowRoot).host
-          : null);
-    }
-    return false;
-  };
-  visit(dialog ?? document);
-  // Elements with a positive tabindex precede the normal tab sequence.
-  return found
-    .map((el, order) => ({ el, order }))
-    .sort((a, b) => {
-      const at = a.el.tabIndex;
-      const bt = b.el.tabIndex;
-      const ap = at > 0;
-      const bp = bt > 0;
-      if (ap && bp && at !== bt) return at - bt;
-      if (ap !== bp) return ap ? -1 : 1;
-      return a.order - b.order;
-    })
-    .map(({ el }) => el);
-}
-function deepActiveElement(): Element | null {
-  let active: Element | null = document.activeElement;
-  while (active instanceof HTMLElement && active.shadowRoot?.activeElement)
-    active = active.shadowRoot.activeElement;
-  return active;
-}
 export function installControls(
   service: Service,
   initialConfig: Config,
@@ -225,21 +149,7 @@ export function installControls(
 ) {
   let config = initialConfig;
   let overlay: HTMLElement | undefined;
-  let oldOutline = "";
-  let lastFocused: HTMLElement | undefined;
-  function focus(el: HTMLElement) {
-    if (lastFocused) lastFocused.style.outline = oldOutline;
-    oldOutline = el.style.outline;
-    lastFocused = el;
-    if (
-      !el.hasAttribute("tabindex") &&
-      !el.matches("a,button,input,select,textarea")
-    )
-      el.tabIndex = -1;
-    el.focus({ preventScroll: true });
-    el.scrollIntoView({ block: "nearest", inline: "nearest" });
-    el.style.outline = "3px solid #91eeb9";
-  }
+  let switcherReturnFocus: HTMLElement | undefined;
   function toast(message: string) {
     const node = document.createElement("div");
     node.textContent = message;
@@ -251,7 +161,8 @@ export function installControls(
   function closeSwitcher() {
     overlay?.remove();
     overlay = undefined;
-    lastFocused?.focus();
+    switcherReturnFocus?.focus();
+    switcherReturnFocus = undefined;
   }
   async function switcher() {
     if (overlay) {
@@ -260,6 +171,10 @@ export function installControls(
     }
     if (document.fullscreenElement instanceof HTMLVideoElement)
       await document.exitFullscreen();
+    switcherReturnFocus =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : undefined;
     overlay = document.createElement("div");
     overlay.dataset.tuxtelly = "switcher";
     const root = overlay.attachShadow({ mode: "open" });
@@ -329,6 +244,12 @@ export function installControls(
       isEditing(event.composedPath()[0] ?? event.target)
     )
       return;
+    if (
+      ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(
+        event.key,
+      )
+    )
+      return;
     const action = matchAction(event, config);
     if (
       event.repeat &&
@@ -359,50 +280,6 @@ export function installControls(
         });
       return;
     }
-    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
-      return;
-    const direction = (
-      {
-        ArrowLeft: "left",
-        ArrowRight: "right",
-        ArrowUp: "up",
-        ArrowDown: "down",
-      } as const
-    )[event.key as "ArrowLeft" | "ArrowRight" | "ArrowUp" | "ArrowDown"];
-    if (!direction) return;
-    const video = activeVideo();
-    const selected = deepActiveElement();
-    if (
-      video &&
-      isPlaybackSurface(video, selected, service.adapter) &&
-      ((["left", "right"].includes(direction) &&
-        (!video.paused || service.adapter === "prime")) ||
-        (service.adapter === "prime" && ["up", "down"].includes(direction)))
-    ) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      const action =
-        direction === "left"
-          ? "seekBackward"
-          : direction === "right"
-            ? "seekForward"
-            : direction === "up"
-              ? "volumeUp"
-              : "volumeDown";
-      void playerAction(action, service, config);
-      return;
-    }
-    const elements = focusables();
-    if (!elements.length) return;
-    const current = elements.indexOf(selected as HTMLElement);
-    const forward = direction === "right" || direction === "down";
-    const step = forward ? 1 : -1;
-    const index =
-      current < 0 ? (forward ? 0 : elements.length - 1) : current + step;
-    if (index < 0 || index >= elements.length) return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    focus(elements[index]);
   };
   document.addEventListener("keydown", onKey, true);
   return {
@@ -412,7 +289,6 @@ export function installControls(
     dispose() {
       document.removeEventListener("keydown", onKey, true);
       closeSwitcher();
-      if (lastFocused) lastFocused.style.outline = oldOutline;
     },
     pause: () => playerAction("pause", service, config),
     switcher,

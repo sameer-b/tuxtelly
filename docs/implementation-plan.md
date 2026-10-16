@@ -67,8 +67,8 @@ settings after Firefox restart.
 ## Phase 3: Navigation and YouTube
 
 - Input contexts, text-entry protection, calibration, and configurable mappings.
-- Generic spatial navigation, focus restoration, modal scopes, and pointer coexistence.
-- YouTube navigation, player discovery, playback controls, captions, and fullscreen.
+- YouTube keyboard shortcuts, player discovery, playback controls, captions, and fullscreen.
+- Provider pages retain native arrow-key behavior; use the remote gyro mouse for navigation.
 - Switcher and pause/mute policy with result handling.
 
 Exit: browse, search, select, play, seek, adjust volume, use captions, enter

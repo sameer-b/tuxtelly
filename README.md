@@ -14,7 +14,7 @@ private monorepo. Public release and persistent extension signing remain pending
 
 The preview includes recent-use service ordering, a last-used resume action,
 guided service setup, keyboard mapping and calibration, managed tabs, an in-page
-switcher, generic spatial navigation, HTML video controls, optional site
+switcher, HTML video controls, optional site
 permissions, local config backup, privacy-limited diagnostics, and a bundled
 Home screen.
 
@@ -63,17 +63,18 @@ use.
 
 | Action                                             | Default            |
 | -------------------------------------------------- | ------------------ |
-| Navigate / select                                  | Arrow keys / Enter |
+| Navigate / select in TuxTelly Home                 | Arrow keys / Enter |
 | Service switcher                                   | F8                 |
 | Home inside a managed service                      | Home               |
 | Browser-wide recovery Home                         | Alt+Shift+H        |
 | Play / pause                                       | Space or K         |
-| Seek during playback when the page/video has focus | Left / Right       |
 | Captions / player fullscreen                       | C / F              |
 | Player mute / volume                               | M / + / -          |
 
-Bindings can be changed in Remote settings. Text fields retain normal typing.
-System audio keys stay with KDE; player volume is separate from system volume.
+Inside streaming services, use the remote’s gyro mouse and each provider’s own
+controls. TuxTelly leaves arrow keys to the site. Other bindings can be changed
+in Remote settings. System audio keys stay with KDE; player volume is separate
+from system volume.
 Adding an arbitrary URL provides launch support. Navigation and playback control
 depend on the website and require permission plus a compatible adapter.
 

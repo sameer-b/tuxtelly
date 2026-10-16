@@ -1,26 +1,31 @@
 import { describe, expect, it } from "vitest";
-import { isPlaybackSurface, seek } from "./index";
-describe("playback focus", () => {
-  it("recognizes YouTube's focused player wrapper without stealing arrows from its buttons", () => {
-    const wrapper = document.createElement("div");
-    wrapper.className = "html5-video-player";
-    const video = document.createElement("video");
+import { defaultConfig } from "@tuxtelly/core";
+import { installControls, seek } from "./index";
+describe("provider arrow keys", () => {
+  it("leaves arrow keys untouched on service pages", () => {
     const button = document.createElement("button");
-    wrapper.append(video, button);
-    expect(isPlaybackSurface(video, wrapper, "youtube")).toBe(true);
-    expect(isPlaybackSurface(video, button, "youtube")).toBe(false);
-    expect(isPlaybackSurface(video, wrapper, "generic")).toBe(false);
-    expect(
-      isPlaybackSurface(video, document.createElement("div"), "youtube"),
-    ).toBe(false);
-  });
-  it("recognizes Prime Video's focused player container while preserving control focus", () => {
-    const container = document.createElement("div");
-    const video = document.createElement("video");
-    const control = document.createElement("button");
-    container.append(video, control);
-    expect(isPlaybackSurface(video, container, "prime")).toBe(true);
-    expect(isPlaybackSurface(video, control, "prime")).toBe(false);
+    Object.defineProperty(button, "getBoundingClientRect", {
+      value: () => ({ width: 100, height: 40 }),
+    });
+    document.body.append(button);
+    document.body.tabIndex = -1;
+    document.body.focus();
+    const controls = installControls(
+      defaultConfig.services[0],
+      defaultConfig,
+      async () => {},
+    );
+    const event = new KeyboardEvent("keydown", {
+      key: "ArrowRight",
+      bubbles: true,
+      cancelable: true,
+    });
+    document.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(false);
+    expect(document.activeElement).toBe(document.body);
+    controls.dispose();
+    button.remove();
+    document.body.removeAttribute("tabindex");
   });
 });
 describe("seeking", () => {

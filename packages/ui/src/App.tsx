@@ -949,8 +949,8 @@ export function App({ client }: { client: Client }) {
             </div>
             <p className="hint">
               TuxTelly cannot read your provider passwords. Firefox stores your
-              sessions; site access lets the extension add remote navigation and
-              player controls to the selected sites.
+              sessions; site access lets the extension add playback shortcuts to
+              selected sites. Arrow navigation remains with each site.
             </p>
           </section>
           <div className="save-bar">
@@ -1167,9 +1167,9 @@ function Remote({
         Home returns to TuxTelly. F8 opens the service switcher. Alt+Shift+H is
         Firefox’s browser-wide Home shortcut; change it in Firefox → Add-ons →
         Manage Extension Shortcuts if another program uses that key. Left/right
-        seek only while the player has focus; elsewhere the arrows navigate the
-        page. System volume belongs to KDE; these volume keys adjust the active
-        HTML video only.
+        Arrow keys remain available to the streaming service. Use the remote’s
+        gyro mouse for its menus and controls. System volume belongs to KDE;
+        these volume keys adjust the active HTML video only.
       </p>
     </main>
   );

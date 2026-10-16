@@ -186,22 +186,15 @@ try {
   await driver.switchTo().window(oneHandle);
   await driver.wait(until.elementLocated(By.id("card-one")), 10000);
   await driver.sleep(300);
-  await driver.findElement(By.css("body")).sendKeys(Key.ARROW_RIGHT);
-  assert.equal(
-    await driver.executeScript("return document.activeElement.id"),
-    "card-one",
+  await driver.executeScript(
+    "document.activeElement?.blur(); document.body.tabIndex=-1; document.body.focus()",
   );
   await driver.actions().sendKeys(Key.ARROW_RIGHT).perform();
   assert.equal(
-    await driver.executeScript("return document.activeElement.id"),
-    "card-two",
+    await driver.executeScript("return document.activeElement === document.body"),
+    true,
   );
-  await driver.actions().sendKeys(Key.ARROW_LEFT).perform();
-  assert.equal(
-    await driver.executeScript("return document.activeElement.id"),
-    "card-one",
-  );
-  check("service arrows follow tab order in both directions");
+  check("service arrows pass through without TuxTelly changing focus");
   await driver.findElement(By.id("search")).sendKeys("f c m k");
   assert.equal(
     await driver.findElement(By.id("search")).getAttribute("value"),

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const VERSION = "0.2.8";
+export const VERSION = "0.2.9";
 export const PROTOCOL = 1;
 export function webUrl(value: string): URL {
   const url = new URL(value);

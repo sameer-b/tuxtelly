@@ -34,9 +34,10 @@ Record test date, Fedora/Firefox version, installation source, display session,
 provider region, and relevant account/subscription variant. Never include account
 passwords, cookies, tokens, or personally identifying viewing information.
 
-A separate live YouTube probe passed **9 checks** on the same Fedora/Firefox setup:
-ordinary signed-out playback, keyboard search, spatial focus, play/pause, seeking,
-player volume/mute, player fullscreen, pause on Home, and reuse of the watch tab.
+A separate live YouTube probe previously passed **9 checks** on the same
+Fedora/Firefox setup. It included TuxTelly-managed spatial focus and arrow-key
+seeking, which have since been removed. The probe must be rerun to verify the
+provider’s native arrow behavior after this change.
 The public test video was [Blender's Big Buck Bunny](https://www.youtube.com/watch?v=aqz-KE-bpKQ).
 Its captions control reported unavailable, so real YouTube captions remain untested.
 This is one public video in headless Firefox, not full YouTube qualification.
@@ -45,8 +46,8 @@ This is one public video in headless Firefox, not full YouTube qualification.
 | ---------------------------------------- | -------------------------------------------- | -------- | -------- | -------- | ----------- |
 | Ordinary Firefox playback                | Passed: one public video                     | Untested | Untested | Untested | Untested    |
 | Provider login and profile selection     | Untested                                     | Untested | Untested | Untested | Untested    |
-| Catalog, search, title/episode selection | Partial: search and spatial focus            | Untested | Untested | Untested | Untested    |
-| Play/pause and seek                      | Passed: public video                         | Untested | Untested | Untested | Untested    |
+| Catalog, search, title/episode selection | Partial: keyboard search                     | Untested | Untested | Untested | Untested    |
+| Play/pause and seek                      | Partial: play/pause passed; native arrows need recheck | Untested | Untested | Untested | Untested    |
 | Subtitles/audio menu                     | Untested: captions unavailable on test video | Untested | Untested | Untested | Untested    |
 | Browser/player fullscreen                | Passed: player only, headless                | Untested | Untested | Untested | Untested    |
 | Switch away, pause, and return           | Passed: Home and existing watch tab          | Untested | Untested | Untested | Untested    |

@@ -136,11 +136,9 @@ Dependencies and exact versions are locked in the workspace. Local use needs no 
 
 ### F06: Spatial navigation
 
-- Find visible, enabled interactive targets and select by direction.
-- Scroll targets into view and show a focus indicator.
-- Handle nested scroll areas and dynamically loaded content.
-- Use adapters for virtualized rows and other structures generic navigation cannot resolve.
-- Bound observers and work performed when the DOM changes.
+Provider-page spatial navigation was removed after user testing found it unnatural.
+TuxTelly Home retains arrow-key navigation; streaming pages keep their native arrow
+behavior and are navigated with the remote gyro mouse.
 
 ### F07: Text and pointer interaction
 
