@@ -4,9 +4,12 @@ import {
   allowedServiceUrl,
   configSchema,
   defaultConfig,
+  defaultSearchServiceIds,
   allOfferTypes,
   isLauncher,
   migrateHulu,
+  migratePeacock,
+  migrateSearchServiceIds,
   migratePrimeVideo,
   originPattern,
   requestSchema,
@@ -141,6 +144,7 @@ export default defineBackground(() => {
       "lastUsedServiceId",
       "primeServiceMigration",
       "huluServiceMigration",
+      "peacockServiceMigration",
     ])
     .then(async (stored) => {
       if (typeof stored.lastUsedServiceId === "string")
@@ -170,6 +174,14 @@ export default defineBackground(() => {
           config,
           lastValidConfig: config,
           huluServiceMigration: true,
+        });
+      }
+      if (canMigrate && stored.peacockServiceMigration !== true) {
+        config = migratePeacock(config);
+        await browser.storage.local.set({
+          config,
+          lastValidConfig: config,
+          peacockServiceMigration: true,
         });
       }
     });
@@ -446,6 +458,7 @@ export default defineBackground(() => {
           "tmdbApiKey",
           "tmdbSearchSettings",
           "tmdbHuluSearchMigration",
+          "tmdbPeacockSearchMigration",
         ]);
         const saved = stored.tmdbSearchSettings as
           { region?: string; serviceIds?: string[] } | undefined;
@@ -454,26 +467,44 @@ export default defineBackground(() => {
             .toLowerCase()
             .includes("hulu"),
         );
-        const defaultServiceIds = [
-          ...new Set(
-            config.services
-              .filter(
-                (service) => service.enabled && service.adapter !== "generic",
-              )
-              .concat(huluServices.filter((service) => service.enabled))
-              .map((service) => service.id),
-          ),
+        const peacockServices = config.services.filter((service) =>
+          `${service.id} ${service.name} ${service.url}`
+            .toLowerCase()
+            .includes("peacock"),
+        );
+        const serviceIds = [
+          ...(saved?.serviceIds ?? defaultSearchServiceIds(config.services)),
         ];
-        const serviceIds = [...(saved?.serviceIds ?? defaultServiceIds)];
         if (
           stored.tmdbHuluSearchMigration !== true &&
           huluServices.some((service) => service.enabled)
         ) {
-          for (const service of huluServices)
-            if (service.enabled && !serviceIds.includes(service.id))
-              serviceIds.push(service.id);
+          serviceIds.splice(
+            0,
+            serviceIds.length,
+            ...migrateSearchServiceIds(serviceIds, config.services, ["hulu"]),
+          );
           await browser.storage.local.set({
             tmdbHuluSearchMigration: true,
+            tmdbSearchSettings: {
+              region: saved?.region ?? "US",
+              serviceIds,
+            },
+          });
+        }
+        if (
+          stored.tmdbPeacockSearchMigration !== true &&
+          peacockServices.some((service) => service.enabled)
+        ) {
+          serviceIds.splice(
+            0,
+            serviceIds.length,
+            ...migrateSearchServiceIds(serviceIds, config.services, [
+              "peacock",
+            ]),
+          );
+          await browser.storage.local.set({
+            tmdbPeacockSearchMigration: true,
             tmdbSearchSettings: {
               region: saved?.region ?? "US",
               serviceIds,

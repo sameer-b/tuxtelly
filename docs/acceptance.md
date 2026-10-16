@@ -42,16 +42,16 @@ The public test video was [Blender's Big Buck Bunny](https://www.youtube.com/wat
 Its captions control reported unavailable, so real YouTube captions remain untested.
 This is one public video in headless Firefox, not full YouTube qualification.
 
-| Flow                                     | YouTube                                      | Netflix  | Disney+  | HBO Max  | Prime Video |
-| ---------------------------------------- | -------------------------------------------- | -------- | -------- | -------- | ----------- |
-| Ordinary Firefox playback                | Passed: one public video                     | Untested | Untested | Untested | Untested    |
-| Provider login and profile selection     | Untested                                     | Untested | Untested | Untested | Untested    |
-| Catalog, search, title/episode selection | Partial: keyboard search                     | Untested | Untested | Untested | Untested    |
-| Play/pause and seek                      | Partial: play/pause passed; native arrows need recheck | Untested | Untested | Untested | Untested    |
-| Subtitles/audio menu                     | Untested: captions unavailable on test video | Untested | Untested | Untested | Untested    |
-| Browser/player fullscreen                | Passed: player only, headless                | Untested | Untested | Untested | Untested    |
-| Switch away, pause, and return           | Passed: Home and existing watch tab          | Untested | Untested | Untested | Untested    |
-| Login persistence across restart         | Untested                                     | Untested | Untested | Untested | Untested    |
+| Flow                                     | YouTube                                      | Netflix  | Disney+  | HBO Max  | Prime Video | Peacock  |
+| ---------------------------------------- | -------------------------------------------- | -------- | -------- | -------- | ----------- | -------- |
+| Ordinary Firefox playback                | Passed: one public video                     | Untested | Untested | Untested | Untested    | Untested |
+| Provider login and profile selection     | Untested                                     | Untested | Untested | Untested | Untested    | Untested |
+| Catalog, search, title/episode selection | Partial: keyboard search                     | Untested | Untested | Untested | Untested    | Untested |
+| Play/pause and seek                      | Partial: play/pause passed; native arrows need recheck | Untested | Untested | Untested | Untested | Untested |
+| Subtitles/audio menu                     | Untested: captions unavailable on test video | Untested | Untested | Untested | Untested | Untested |
+| Browser/player fullscreen                | Passed: player only, headless                | Untested | Untested | Untested | Untested    | Untested |
+| Switch away, pause, and return           | Passed: Home and existing watch tab          | Untested | Untested | Untested | Untested    | Untested |
+| Login persistence across restart         | Untested                                     | Untested | Untested | Untested | Untested    | Untested |
 
 Additional gates:
 

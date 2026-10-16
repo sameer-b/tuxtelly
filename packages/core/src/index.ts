@@ -5,7 +5,7 @@ export {
   resolveProviderIds,
 } from "./providers";
 
-export const VERSION = "0.2.14";
+export const VERSION = "0.2.16";
 export const PROTOCOL = 1;
 export function webUrl(value: string): URL {
   const url = new URL(value);
@@ -155,6 +155,28 @@ export const configSchema = z
       });
   });
 export type Config = z.infer<typeof configSchema>;
+const genericBuiltinSearchServiceIds = new Set(["hulu", "peacock"]);
+export function defaultSearchServiceIds(services: Config["services"]) {
+  return services
+    .filter(
+      (service) =>
+        service.enabled &&
+        (service.adapter !== "generic" ||
+          genericBuiltinSearchServiceIds.has(service.id)),
+    )
+    .map((service) => service.id);
+}
+export function migrateSearchServiceIds(
+  serviceIds: string[],
+  services: Config["services"],
+  newlySupportedIds: readonly string[],
+) {
+  const selected = new Set(serviceIds);
+  for (const service of services)
+    if (service.enabled && newlySupportedIds.includes(service.id))
+      selected.add(service.id);
+  return [...selected];
+}
 export const defaultConfig: Config = configSchema.parse({
   version: 1,
   launcherUrl: "",
@@ -208,6 +230,14 @@ export const defaultConfig: Config = configSchema.parse({
       adapter: "generic",
       color: "#1ce783",
     },
+    {
+      id: "peacock",
+      name: "Peacock",
+      url: "https://www.peacocktv.com/",
+      origins: ["https://www.peacocktv.com"],
+      adapter: "generic",
+      color: "#f6c744",
+    },
   ],
   bindings: [
     { key: "Home", action: "home" },
@@ -245,6 +275,24 @@ export function migrateHulu(config: Config): Config {
   const hulu = defaultConfig.services.find((service) => service.id === "hulu");
   if (!hulu) return config;
   return { ...config, services: [...config.services, structuredClone(hulu)] };
+}
+export function migratePeacock(config: Config): Config {
+  if (
+    config.services.some((service) =>
+      `${service.id} ${service.name} ${service.url}`
+        .toLowerCase()
+        .includes("peacock"),
+    )
+  )
+    return config;
+  const peacock = defaultConfig.services.find(
+    (service) => service.id === "peacock",
+  );
+  if (!peacock) return config;
+  return {
+    ...config,
+    services: [...config.services, structuredClone(peacock)],
+  };
 }
 export function bindingId(
   key: Pick<Binding, "key" | "alt" | "ctrl" | "shift" | "meta">,

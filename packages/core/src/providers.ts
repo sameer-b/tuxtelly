@@ -41,6 +41,12 @@ const providerAliases: Record<string, string[]> = {
     "hulu ad free",
     "hulu premium",
   ],
+  peacock: [
+    "peacock",
+    "peacock tv",
+    "peacock premium",
+    "peacock premium plus",
+  ],
 };
 
 /**
@@ -69,6 +75,7 @@ function aliasesFor(service: ServiceProviderIdentity) {
   );
   if (identity.includes("hulu")) return providerAliases.hulu;
   if (identity.includes("disney")) return providerAliases.disney;
+  if (identity.includes("peacock")) return providerAliases.peacock;
   return [service.name];
 }
 

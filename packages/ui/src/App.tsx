@@ -25,6 +25,7 @@ import {
 import "./styles.css";
 import { wallpaperGroups, wallpaperPresets } from "./wallpapers";
 import { themes } from "./themes";
+import { navigateSearch } from "./search-navigation";
 
 function Logo() {
   return (
@@ -119,6 +120,7 @@ export function App({ client }: { client: Client }) {
   const [searchBusy, setSearchBusy] = useState(false);
   const [now, setNow] = useState(new Date());
   const fileInput = useRef<HTMLInputElement>(null);
+  const searchInput = useRef<HTMLInputElement>(null);
   async function refresh() {
     try {
       const reply = await client.request({ type: "state" });
@@ -180,6 +182,10 @@ export function App({ client }: { client: Client }) {
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [view, connected]);
+  useEffect(() => {
+    if (view === "search")
+      requestAnimationFrame(() => searchInput.current?.focus());
+  }, [view]);
   async function request(message: Parameters<Client["request"]>[0]) {
     setBusy(true);
     try {
@@ -625,7 +631,13 @@ export function App({ client }: { client: Client }) {
         </main>
       )}
       {view === "search" && (
-        <main className="settings search-page">
+        <main
+          className="settings search-page"
+          onKeyDown={(event) => {
+            if (navigateSearch(event.currentTarget, event.nativeEvent))
+              event.stopPropagation();
+          }}
+        >
           <p className="eyebrow">FIND SOMETHING TO WATCH</p>
           <h1>
             Search <span>everywhere.</span>
@@ -640,6 +652,8 @@ export function App({ client }: { client: Client }) {
             onSubmit={(event) => void runSearch(event)}
           >
             <input
+              ref={searchInput}
+              type="search"
               aria-label="Search movies and shows"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
@@ -652,6 +666,10 @@ export function App({ client }: { client: Client }) {
               Search
             </button>
           </form>
+          <p className="hint search-keyboard-hint">
+            Use ↑ ↓ to move through filters and results · Enter to open · ← →
+            move the query cursor
+          </p>
           {!tmdbConfigured && (
             <p className="hint">
               Add a TMDB API key in Settings to enable search.

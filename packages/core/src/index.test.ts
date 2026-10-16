@@ -5,12 +5,15 @@ import {
   configSchema,
   createDiagnosticReport,
   defaultConfig,
+  defaultSearchServiceIds,
   allOfferTypes,
   isLauncher,
   matchServiceOffers,
   matchAction,
   migrateHulu,
+  migratePeacock,
   migratePrimeVideo,
+  migrateSearchServiceIds,
   nearest,
   originPattern,
   parseConfig,
@@ -66,6 +69,56 @@ describe("configuration boundaries", () => {
     );
     expect(migrateHulu(upgraded)).toBe(upgraded);
   });
+  it("adds Peacock to the home service list and migrates older configs once", () => {
+    const peacock = defaultConfig.services.find(
+      (service) => service.id === "peacock",
+    );
+    expect(peacock).toMatchObject({
+      name: "Peacock",
+      url: "https://www.peacocktv.com/",
+      origins: ["https://www.peacocktv.com"],
+      adapter: "generic",
+      enabled: true,
+    });
+    expect(
+      allowedServiceUrl(peacock!, "https://www.peacocktv.com/watch/asset"),
+    ).toBe(true);
+    const existing = structuredClone(defaultConfig);
+    existing.services = existing.services.filter(
+      (service) => service.id !== "peacock",
+    );
+    const upgraded = migratePeacock(existing);
+    expect(upgraded.services.at(-1)?.id).toBe("peacock");
+    expect(migratePeacock(upgraded)).toBe(upgraded);
+    expect(existing.services.some((service) => service.id === "peacock")).toBe(
+      false,
+    );
+    const defaultSearchIds = defaultSearchServiceIds(defaultConfig.services);
+    expect(defaultSearchIds).toContain("peacock");
+    expect(defaultSearchIds).toContain("hulu");
+    const customGeneric = {
+      ...defaultConfig.services[0],
+      id: "custom-example",
+      adapter: "generic" as const,
+    };
+    expect(defaultSearchServiceIds([...defaultConfig.services, customGeneric])).not.toContain(
+      "custom-example",
+    );
+    expect(
+      migrateSearchServiceIds(
+        ["netflix"],
+        defaultConfig.services,
+        ["peacock"],
+      ),
+    ).toEqual(["netflix", "peacock"]);
+    expect(
+      migrateSearchServiceIds(
+        ["netflix", "peacock"],
+        defaultConfig.services,
+        ["peacock"],
+      ),
+    ).toEqual(["netflix", "peacock"]);
+  });
   it("keeps service URLs and activity out of diagnostic reports", () => {
     const report = createDiagnosticReport(
       defaultConfig,
@@ -76,7 +129,7 @@ describe("configuration boundaries", () => {
       "Firefox test",
       "2026-10-16T00:00:00.000Z",
     );
-    expect(report.configuredServices).toBe(6);
+    expect(report.configuredServices).toBe(7);
     expect(JSON.stringify(report)).not.toContain("youtube.com");
     expect(JSON.stringify(report)).not.toContain("lastUsedServiceId");
   });
@@ -183,10 +236,35 @@ describe("global search request boundary", () => {
         { provider_id: 339, provider_name: "Disney Channel" },
         { provider_id: 192, provider_name: "YouTube" },
         { provider_id: 2528, provider_name: "YouTube TV" },
+        { provider_id: 386, provider_name: "Peacock Premium" },
+        { provider_id: 387, provider_name: "Peacock Premium Plus" },
+        {
+          provider_id: 388,
+          provider_name: "Peacock Premium Plus Amazon Channel",
+        },
       ],
     );
     expect(mappings.get("disney")).toEqual([337, 338, 2739]);
     expect(mappings.get("youtube")).toEqual([192]);
+    const peacockMappings = resolveProviderIds(
+      [
+        {
+          id: "peacock",
+          adapter: "generic",
+          name: "Peacock",
+          url: "https://www.peacocktv.com/",
+        },
+      ],
+      [
+        { provider_id: 386, provider_name: "Peacock Premium" },
+        { provider_id: 387, provider_name: "Peacock Premium Plus" },
+        {
+          provider_id: 388,
+          provider_name: "Peacock Premium Plus Amazon Channel",
+        },
+      ],
+    );
+    expect(peacockMappings.get("peacock")).toEqual([386, 387]);
   });
   it("matches services against the providers on each title offer", () => {
     const services = [
@@ -208,22 +286,31 @@ describe("global search request boundary", () => {
         name: "Prime Video",
         url: "https://www.primevideo.com/",
       },
+      {
+        id: "peacock",
+        adapter: "generic",
+        name: "Peacock",
+        url: "https://www.peacocktv.com/",
+      },
     ];
     const offers = {
       flatrate: [
         { provider_id: 2739, provider_name: "Disney Plus Basic with Ads" },
         { provider_id: 15, provider_name: "Hulu with Ads" },
+        { provider_id: 386, provider_name: "Peacock Premium" },
       ],
       buy: [{ provider_id: 10, provider_name: "Amazon Video" }],
     };
     expect(matchServiceOffers(services, offers, streamingOfferTypes)).toEqual([
       { serviceId: "disney", availability: "flatrate" },
       { serviceId: "hulu", availability: "flatrate" },
+      { serviceId: "peacock", availability: "flatrate" },
     ]);
     expect(matchServiceOffers(services, offers, allOfferTypes)).toEqual([
       { serviceId: "disney", availability: "flatrate" },
       { serviceId: "hulu", availability: "flatrate" },
       { serviceId: "prime", availability: "buy" },
+      { serviceId: "peacock", availability: "flatrate" },
     ]);
   });
   it("accepts a bounded search request with an ISO region", () => {

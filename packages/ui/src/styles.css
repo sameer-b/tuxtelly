@@ -563,6 +563,9 @@ kbd {
   font-size: 1.25em;
   padding: 18px 20px;
 }
+.search-keyboard-hint {
+  margin: -8px 0 20px;
+}
 .search-filters,
 .search-service-settings {
   display: flex;

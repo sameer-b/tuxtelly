@@ -17,16 +17,17 @@ guided service setup, keyboard mapping and calibration, managed tabs, an in-page
 switcher, HTML video controls, optional site
 permissions, local config backup, privacy-limited diagnostics, a bundled Home
 screen, and local TMDB-powered global search. Search configuration and the TMDB
-key stay in the Firefox profile; no server is needed. See
+key stay in the Firefox profile; no server is needed. Peacock is included in the
+home service list and global search filters. See
 [global search setup](docs/global-search.md).
 
-Local checks pass 25 unit tests. The most recent recorded run passed 19 Firefox
+Local checks pass 36 unit tests. The most recent recorded run passed 19 Firefox
 integration checks on the reference Fedora 44 laptop with Firefox 156; the new
 Prime Video and recent-use-ordering flows still need a browser run. Fixture checks
 do not establish full provider compatibility. A separate live YouTube probe
 passed 9 checks covering public playback, search, controls, and tab switching.
-Prime Video, Netflix, Disney+, HBO Max, and signed-in YouTube flows remain
-unverified.
+Prime Video, Netflix, Disney+, HBO Max, Peacock, and signed-in YouTube flows
+remain unverified.
 See [test status](docs/acceptance.md).
 
 ## Try the local preview
