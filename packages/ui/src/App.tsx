@@ -432,18 +432,24 @@ export function App({ client }: { client: Client }) {
             </button>
           </div>
           <div className="living-room">
-            <span className="orbit" aria-hidden="true">
-              ◎
+            <span className="retro-tv" aria-hidden="true">
+              <svg viewBox="0 0 64 52" fill="none">
+                <path d="m20 8 10 8M44 8l-10 8" />
+                <rect x="5" y="15" width="54" height="31" rx="6" />
+                <rect x="11" y="20" width="34" height="21" rx="3" />
+                <path d="M16 37V25h24v12M50 24h3m-3 6h3m-3 6h3M23 47v3m18-3v3M17 50h30" />
+              </svg>
+              <span>PLAY</span>
             </span>
             <div>
               <h3>A little more living room.</h3>
               <p>
                 {isRetroTheme
-                  ? "Your home video shelf, always ready for another night in."
+                  ? "The lights are low. Your favorites are ready."
                   : "Powered by Linux. Ready for the sofa."}
               </p>
             </div>
-            <span className="pill">OPEN SOURCE</span>
+            <span className="living-room-stamp">HOME VIDEO</span>
           </div>
         </main>
       )}
