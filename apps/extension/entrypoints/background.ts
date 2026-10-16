@@ -92,7 +92,7 @@ export default defineBackground(() => {
     return result?.ok === true;
   }
   async function pauseOthers(windowId: number, targetService?: string) {
-    for (const tab of await browser.tabs.query({ windowId, active: true })) {
+    for (const tab of await browser.tabs.query({ windowId })) {
       if (tab.id === undefined) continue;
       const service = await serviceFor(tab.id, tab.url);
       if (!service || service.id === targetService || service.backgroundAudio)
@@ -142,11 +142,9 @@ export default defineBackground(() => {
       await browser.storage.local.set({ lastUsedServiceId });
       await inject(tab.id);
       if (
-        (await sessions
-          .getTabValue(tab.id, "tuxtelly.muted")
-          .catch(() => false)) &&
-        (await pause(tab.id))
+        await sessions.getTabValue(tab.id, "tuxtelly.muted").catch(() => false)
       ) {
+        await pause(tab.id);
         await browser.tabs.update(tab.id, { muted: false });
         await sessions.setTabValue(tab.id, "tuxtelly.muted", false);
       }
@@ -320,13 +318,34 @@ export default defineBackground(() => {
       if (message.type === "save") {
         if (!own)
           throw new Error("Edit settings in the extension settings page.");
+        const nextConfig = message.config;
         await browser.storage.local.set({
           lastValidConfig: config,
-          config: message.config,
+          config: nextConfig,
         });
-        config = message.config;
+        config = nextConfig;
         recovery = undefined;
         await registerScripts();
+        for (const tab of await browser.tabs.query({})) {
+          if (tab.id === undefined) continue;
+          const serviceId = await sessions
+            .getTabValue(tab.id, tag)
+            .catch(() => undefined);
+          const service = nextConfig.services.find(
+            (item) => item.id === serviceId && item.enabled,
+          );
+          const extensionMuted = await sessions
+            .getTabValue(tab.id, "tuxtelly.muted")
+            .catch(() => false);
+          if (!service && extensionMuted) {
+            await browser.tabs
+              .update(tab.id, { muted: false })
+              .catch(() => undefined);
+            await sessions
+              .setTabValue(tab.id, "tuxtelly.muted", false)
+              .catch(() => undefined);
+          }
+        }
         for (const tab of await browser.tabs.query({}))
           if (tab.id !== undefined)
             void browser.tabs

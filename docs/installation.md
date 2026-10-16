@@ -75,15 +75,21 @@ keeping the profile and provider logins. Configure browser fullscreen and laptop
 lid or sleep behavior through KDE, then verify suspend/resume on the TV.
 
 For self-distribution, create a Mozilla Add-ons developer account and generate
-unlisted signing API credentials. Build the extension, then set credentials only
-in the current shell and sign it:
+unlisted signing API credentials at
+<https://addons.mozilla.org/developers/addon/api/key/>. Copy the example into a
+local credentials file, restrict its permissions, and add the credentials there:
 
 ```sh
+cp .env.local.example .env.local
+chmod 600 .env.local
+# Edit .env.local and set WEB_EXT_API_KEY and WEB_EXT_API_SECRET.
 pnpm build
-export WEB_EXT_API_KEY='your AMO API key'
-export WEB_EXT_API_SECRET='your AMO API secret'
 pnpm sign:extension
 ```
+
+`.env.local` is ignored by Git. Do not commit it or paste the key or secret into
+chat. The signing command passes credentials to `web-ext` through environment
+variables rather than command-line arguments.
 
 The signed XPI is written to `artifacts/signed/`. Copy it to the Fedora laptop and
 run `integrations/fedora/install-signed-extension.sh /path/to/tuxtelly.xpi`.

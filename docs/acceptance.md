@@ -17,21 +17,15 @@ navigation, protected text input, actual fixture-video seeking, captions, player
 fullscreen, pause-on-switch, repeated-launch deduplication, closed-tab recovery,
 bridge isolation, permission revocation, and offline Home activation.
 
-Current working copy rerun: 2026-10-16, Fedora 44 and Firefox 156.0, using a
-separate headless profile over SSH. All 16 browser checks passed, including the
-new guided-setup and favorite pin/reorder behavior. The 22 local unit tests also
-pass. This still does not verify a physical remote or provider account flows.
+The current working copy passes 22 unit tests, TypeScript, ESLint, Prettier,
+builds, and extension lint. The Fedora 44 / Firefox 156.0 headless run passed 19
+browser checks, including guided setup, pinned services, background-tab pause,
+and cleanup of TuxTelly-owned mute state. Firefox lint reports two bundled React
+renderer `innerHTML` warnings; project code does not use raw HTML rendering or
+runtime code generation.
 
-The 20 unit tests at the time covered configuration/protocol boundaries, input
-handling, spatial geometry, tab coordination, and seekable media ranges. Build, TypeScript, ESLint,
-and extension lint pass. Extension lint reports two React renderer `innerHTML`
-warnings; project code does not use raw HTML rendering or runtime code generation.
-
-These results do not validate DRM, GPU decoding, HDMI audio, or the physical remote.
-
-The current working copy adds 2 unit tests for older configuration migration and
-diagnostic-data privacy. `pnpm check` and the remote Firefox fixture suite pass.
-The fixture suite uses Firefox headless and does not exercise the physical remote.
+Fixture tests do not validate DRM, GPU decoding, HDMI audio, physical remote
+behavior, or provider account flows.
 
 ## Provider acceptance
 

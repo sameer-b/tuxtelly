@@ -275,7 +275,68 @@ try {
   );
   await driver.switchTo().window(twoHandle);
   await driver.wait(until.elementLocated(By.id("card-one")), 10000);
+  await driver.switchTo().window(oneHandle);
+  await driver.findElement(By.id("play")).click();
+  await driver.wait(
+    async () =>
+      !(await driver.executeScript(
+        'return document.querySelector("video").paused',
+      )),
+    5000,
+  );
   await driver.switchTo().window(homeHandle);
+  await driver.wait(
+    async () =>
+      await driver.executeScript(
+        'return document.activeElement?.dataset?.service === "one"',
+      ),
+    5000,
+  );
+  check("returning Home restores keyboard focus to the selected service");
+  await driver.get(home);
+  assert.equal((await message({ type: "open", serviceId: "two" })).ok, true);
+  await driver.switchTo().window(oneHandle);
+  await driver.wait(
+    async () =>
+      await driver.executeScript(
+        'return document.querySelector("video").paused',
+      ),
+    5000,
+  );
+  check("switching from Home pauses playback in an inactive service tab");
+
+  await driver.executeScript('document.querySelector("video").remove()');
+  await driver.switchTo().window(homeHandle);
+  assert.equal((await message({ type: "open", serviceId: "two" })).ok, true);
+  const mutedState = async () =>
+    driver.executeAsyncScript(
+      "const done=arguments[arguments.length-1];browser.tabs.query({}).then(tabs=>done(tabs.find(tab=>tab.url===arguments[0])?.mutedInfo?.muted));",
+      `${origin}/fixture/one`,
+    );
+  await driver.wait(async () => await mutedState(), 5000);
+  await driver.switchTo().window(oneHandle);
+  await driver.executeScript(
+    'const video=document.createElement("video");video.controls=true;video.style.cssText="display:block;width:560px";video.src="/sample.webm";document.body.append(video)',
+  );
+  await driver.switchTo().window(homeHandle);
+  assert.equal((await message({ type: "open", serviceId: "one" })).ok, true);
+  await driver.wait(async () => (await mutedState()) === false, 5000);
+  check("extension-owned fallback mute is cleared when returning to a service");
+
+  await driver.switchTo().window(oneHandle);
+  await driver.executeScript('document.querySelector("video").remove()');
+  await driver.switchTo().window(homeHandle);
+  assert.equal((await message({ type: "open", serviceId: "two" })).ok, true);
+  await driver.wait(async () => await mutedState(), 5000);
+  const withoutOne = structuredClone(config);
+  withoutOne.services = withoutOne.services.filter(
+    (service) => service.id !== "one",
+  );
+  assert.equal((await message({ type: "save", config: withoutOne })).ok, true);
+  await driver.wait(async () => (await mutedState()) === false, 5000);
+  assert.equal((await message({ type: "save", config })).ok, true);
+  check("removing a service clears TuxTelly-owned tab mute state");
+
   await driver.get(home);
   const rapid = await driver.executeAsyncScript(
     'const done=arguments[arguments.length-1];Promise.all(Array.from({length:12},()=>browser.runtime.sendMessage({type:"open",serviceId:"one"}))).then(done);',

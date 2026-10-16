@@ -101,9 +101,8 @@ export function App({ client }: { client: Client }) {
   }, []);
   useEffect(() => {
     if (view !== "library") return;
-    const onFocus = () => void refresh();
-    window.addEventListener("focus", onFocus);
-    const timer = setTimeout(() => {
+    const focusSelectedService = () => {
+      if (document.visibilityState === "hidden") return;
       const selected = sessionStorage.getItem("tuxtelly.selection");
       const buttons = [
         ...document.querySelectorAll<HTMLButtonElement>("[data-service]"),
@@ -112,10 +111,22 @@ export function App({ client }: { client: Client }) {
         buttons.find((button) => button.dataset.service === selected) ??
         buttons[0]
       )?.focus();
-    }, 50);
+    };
+    const onFocus = () => {
+      void refresh();
+      requestAnimationFrame(focusSelectedService);
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible")
+        requestAnimationFrame(focusSelectedService);
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    const timer = setTimeout(focusSelectedService, 50);
     return () => {
       clearTimeout(timer);
       window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [view, connected]);
   async function request(message: Parameters<Client["request"]>[0]) {

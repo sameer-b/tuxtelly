@@ -6,7 +6,7 @@ const apiKey = process.env.WEB_EXT_API_KEY;
 const apiSecret = process.env.WEB_EXT_API_SECRET;
 if (!apiKey || !apiSecret) {
   console.error(
-    "Set WEB_EXT_API_KEY and WEB_EXT_API_SECRET from your Mozilla Add-ons developer account.",
+    "Set WEB_EXT_API_KEY and WEB_EXT_API_SECRET in .env.local or the current shell.",
   );
   process.exit(2);
 }
@@ -19,8 +19,6 @@ const result = spawnSync(
     "web-ext",
     "sign",
     "--channel=unlisted",
-    `--api-key=${apiKey}`,
-    `--api-secret=${apiSecret}`,
     `--source-dir=${resolve("apps/extension/.output/firefox-mv3")}`,
     `--artifacts-dir=${artifacts}`,
   ],

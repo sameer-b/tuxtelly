@@ -18,7 +18,7 @@ switcher, generic spatial navigation, HTML video controls, optional site
 permissions, local config backup, privacy-limited diagnostics, and a bundled
 Home screen.
 
-Local checks pass 22 unit tests; 16 Firefox integration checks passed on the
+Local checks pass 22 unit tests; 19 Firefox integration checks pass on the
 reference Fedora 44 laptop with Firefox 156. These establish fixture behavior,
 not full compatibility with streaming providers. A separate live YouTube probe
 passes 9 checks covering public playback, search, controls, and tab switching.

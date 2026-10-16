@@ -29,8 +29,8 @@ scope; the initial preview does not satisfy all exit criteria.
   privacy-limited diagnostic export are implemented. AMO signing and Fedora policy
   install/removal scripts are prepared; credentials and TV-side acceptance remain.
 
-Controlled tests: 20 local unit tests and 15 Firefox integration checks on the
-reference Fedora laptop passed. See [acceptance](acceptance.md) for detailed boundaries.
+Controlled tests: 22 local unit tests and 19 Firefox integration checks passed
+on the reference Fedora laptop. See [acceptance](acceptance.md) for detailed boundaries.
 
 ## Phase 0: Prove browser and remote assumptions
 
