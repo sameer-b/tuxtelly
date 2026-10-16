@@ -15,8 +15,10 @@ private monorepo. Public release and persistent extension signing remain pending
 The preview includes recent-use service ordering, a last-used resume action,
 guided service setup, keyboard mapping and calibration, managed tabs, an in-page
 switcher, HTML video controls, optional site
-permissions, local config backup, privacy-limited diagnostics, and a bundled
-Home screen.
+permissions, local config backup, privacy-limited diagnostics, a bundled Home
+screen, and local TMDB-powered global search. Search configuration and the TMDB
+key stay in the Firefox profile; no server is needed. See
+[global search setup](docs/global-search.md).
 
 Local checks pass 25 unit tests. The most recent recorded run passed 19 Firefox
 integration checks on the reference Fedora 44 laptop with Firefox 156; the new
@@ -56,20 +58,21 @@ use.
 
 - [Architecture and requirements](docs/project-plan.md)
 - [Implementation progress and roadmap](docs/implementation-plan.md)
+- [Global search server option analysis](docs/global-search-server-plan.md) (server deferred)
 - [Hardware and provider acceptance checklist](docs/acceptance.md)
 - [Contributing](CONTRIBUTING.md)
 
 ## Controls
 
-| Action                                             | Default            |
-| -------------------------------------------------- | ------------------ |
-| Navigate / select in TuxTelly Home                 | Arrow keys / Enter |
-| Service switcher                                   | F8                 |
-| Home inside a managed service                      | Home               |
-| Browser-wide recovery Home                         | Alt+Shift+H        |
-| Play / pause                                       | Space or K         |
-| Captions / player fullscreen                       | C / F              |
-| Player mute / volume                               | M / + / -          |
+| Action                             | Default            |
+| ---------------------------------- | ------------------ |
+| Navigate / select in TuxTelly Home | Arrow keys / Enter |
+| Service switcher                   | F8                 |
+| Home inside a managed service      | Home               |
+| Browser-wide recovery Home         | Alt+Shift+H        |
+| Play / pause                       | Space or K         |
+| Captions / player fullscreen       | C / F              |
+| Player mute / volume               | M / + / -          |
 
 Inside streaming services, use the remote’s gyro mouse and each provider’s own
 controls. TuxTelly leaves arrow keys to the site. Other bindings can be changed

@@ -3,6 +3,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type FormEvent,
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import {
@@ -69,10 +70,23 @@ function navigate(event: ReactKeyboardEvent<HTMLElement>) {
     elements[index].scrollIntoView({ block: "nearest" });
   }
 }
+function offerLabel(availability: string) {
+  return (
+    {
+      flatrate: "Subscription",
+      free: "Free",
+      ads: "With ads",
+      rent: "Rent",
+      buy: "Buy",
+    }[availability] ?? availability
+  );
+}
 export function App({ client }: { client: Client }) {
   const [config, setConfig] = useState<Config>(structuredClone(defaultConfig));
   const [state, setState] = useState<State | null>(null);
-  const [view, setView] = useState<"library" | "settings" | "remote">(
+  const [view, setView] = useState<
+    "library" | "search" | "settings" | "remote"
+  >(
     client.kind === "extension" &&
       new URLSearchParams(location.search).has("settings")
       ? "settings"
@@ -84,6 +98,25 @@ export function App({ client }: { client: Client }) {
   );
   const [busy, setBusy] = useState(false);
   const [connected, setConnected] = useState(false);
+  const [tmdbKey, setTmdbKey] = useState("");
+  const [tmdbConfigured, setTmdbConfigured] = useState(false);
+  const [searchRegion, setSearchRegion] = useState("US");
+  const [searchServices, setSearchServices] = useState<string[]>([]);
+  const [includePaidOffers, setIncludePaidOffers] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<
+    Array<{
+      tmdbId: number;
+      mediaType: string;
+      title: string;
+      year: string | null;
+      overview: string;
+      posterUrl: string | null;
+      matchedServices: Array<{ serviceId: string; availability: string }>;
+    }>
+  >([]);
+  const [searchStatus, setSearchStatus] = useState("");
+  const [searchBusy, setSearchBusy] = useState(false);
   const [now, setNow] = useState(new Date());
   const fileInput = useRef<HTMLInputElement>(null);
   async function refresh() {
@@ -94,6 +127,17 @@ export function App({ client }: { client: Client }) {
       setConfig(configSchema.parse(next.config));
       setState(next);
       setConnected(true);
+      const searchSettings = await client.request({ type: "searchSettings" });
+      if (searchSettings.ok && searchSettings.data) {
+        const saved = searchSettings.data as {
+          configured: boolean;
+          region: string;
+          serviceIds: string[];
+        };
+        setTmdbConfigured(saved.configured);
+        setSearchRegion(saved.region);
+        setSearchServices(saved.serviceIds);
+      }
       if (next.recovery) setMessage(next.recovery);
     } catch {
       setConnected(false);
@@ -173,6 +217,106 @@ export function App({ client }: { client: Client }) {
       );
     }
   }
+  async function saveTmdbSettings() {
+    try {
+      if (
+        client.kind === "extension" &&
+        !(await client.grant?.([
+          "https://api.themoviedb.org/*",
+          "https://image.tmdb.org/*",
+        ]))
+      )
+        throw new Error("Allow TuxTelly to connect to TMDB, then try again.");
+      if (client.kind === "hosted" && tmdbKey)
+        throw new Error("Manage the TMDB key in Firefox extension Settings.");
+      const reply = await client.request({
+        type: "saveSearchSettings",
+        apiKey: tmdbKey,
+        region: searchRegion,
+        serviceIds: searchServices,
+      });
+      if (!reply.ok) throw new Error(reply.error);
+      setTmdbConfigured(Boolean(tmdbKey) || tmdbConfigured);
+      setTmdbKey("");
+      setMessage("TMDB search settings saved in this Firefox profile.");
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not save TMDB settings.",
+      );
+    }
+  }
+  async function testTmdb() {
+    if (client.kind !== "extension") {
+      setMessage("Test the TMDB key in Firefox extension Settings.");
+      return;
+    }
+    if (!tmdbKey.trim()) {
+      setMessage("Enter the TMDB API key you want to test.");
+      return;
+    }
+    try {
+      if (
+        !(await client.grant?.([
+          "https://api.themoviedb.org/*",
+          "https://image.tmdb.org/*",
+        ]))
+      )
+        throw new Error("Allow TuxTelly to connect to TMDB, then try again.");
+      const reply = await client.request({
+        type: "testTmdb",
+        apiKey: tmdbKey.trim(),
+      });
+      if (!reply.ok) throw new Error(reply.error);
+      setMessage("TMDB connection succeeded. Save the key to enable search.");
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : "TMDB connection failed.",
+      );
+    }
+  }
+  async function removeTmdbKey() {
+    const reply = await client.request({ type: "removeTmdbKey" });
+    if (!reply.ok) {
+      setMessage(reply.error);
+      return;
+    }
+    setTmdbConfigured(false);
+    setMessage("TMDB key removed from this Firefox profile.");
+  }
+  async function runSearch(event?: FormEvent) {
+    event?.preventDefault();
+    if (searchQuery.trim().length < 2) {
+      setSearchStatus("Enter at least two characters.");
+      return;
+    }
+    if (!searchServices.length) {
+      setSearchStatus("Include at least one service in Settings.");
+      return;
+    }
+    setSearchBusy(true);
+    setSearchStatus("Searching TMDB…");
+    try {
+      const reply = await client.request({
+        type: "search",
+        query: searchQuery.trim(),
+        region: searchRegion,
+        serviceIds: searchServices,
+        includePaidOffers,
+      });
+      if (!reply.ok) throw new Error(reply.error);
+      setSearchResults(reply.data as typeof searchResults);
+      setSearchStatus("");
+    } catch (error) {
+      setSearchResults([]);
+      setSearchStatus(
+        error instanceof Error ? error.message : "Search failed.",
+      );
+    } finally {
+      setSearchBusy(false);
+    }
+  }
   function updateService(index: number, patch: Partial<Service>) {
     setConfig((old) => ({
       ...old,
@@ -224,9 +368,7 @@ export function App({ client }: { client: Client }) {
     }
     if (!hasServiceAccess(service) && client.grant) {
       try {
-        const granted = await client.grant(
-          service.origins.map(originPattern),
-        );
+        const granted = await client.grant(service.origins.map(originPattern));
         if (!granted) {
           setMessage(
             `Allow TuxTelly to access ${service.name} so keyboard navigation and player controls can work.`,
@@ -284,6 +426,12 @@ export function App({ client }: { client: Client }) {
             onClick={() => setView("library")}
           >
             Library
+          </button>
+          <button
+            className={view === "search" ? "nav active" : "nav"}
+            onClick={() => setView("search")}
+          >
+            Search
           </button>
           <button
             className={view === "settings" ? "nav active" : "nav"}
@@ -399,9 +547,7 @@ export function App({ client }: { client: Client }) {
                   onFocus={() =>
                     sessionStorage.setItem("tuxtelly.selection", service.id)
                   }
-                  onClick={() =>
-                    void launchService(service)
-                  }
+                  onClick={() => void launchService(service)}
                 >
                   <div className="card-top">
                     <span className="service-number">
@@ -478,6 +624,123 @@ export function App({ client }: { client: Client }) {
           </div>
         </main>
       )}
+      {view === "search" && (
+        <main className="settings search-page">
+          <p className="eyebrow">FIND SOMETHING TO WATCH</p>
+          <h1>
+            Search <span>everywhere.</span>
+          </h1>
+          <p className="subtitle">
+            Search titles and see which selected services list them in{" "}
+            {searchRegion}. Listings do not confirm access through your
+            subscription.
+          </p>
+          <form
+            className="global-search"
+            onSubmit={(event) => void runSearch(event)}
+          >
+            <input
+              aria-label="Search movies and shows"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Movie or show title"
+            />
+            <button
+              className="primary"
+              disabled={searchBusy || !tmdbConfigured}
+            >
+              Search
+            </button>
+          </form>
+          {!tmdbConfigured && (
+            <p className="hint">
+              Add a TMDB API key in Settings to enable search.
+            </p>
+          )}
+          <div className="search-filters">
+            <span>Included services</span>
+            {config.services
+              .filter((service) => service.enabled)
+              .map((service) => (
+                <label className="search-service" key={service.id}>
+                  <input
+                    type="checkbox"
+                    checked={searchServices.includes(service.id)}
+                    onChange={(event) =>
+                      setSearchServices((old) =>
+                        event.target.checked
+                          ? [...old, service.id]
+                          : old.filter((id) => id !== service.id),
+                      )
+                    }
+                  />
+                  {service.name}
+                </label>
+              ))}
+          </div>
+          <label className="search-paid-filter">
+            <input
+              type="checkbox"
+              checked={includePaidOffers}
+              onChange={(event) => setIncludePaidOffers(event.target.checked)}
+            />
+            Also show rent and buy offers
+          </label>
+          {searchStatus && (
+            <p className="search-status" role="status">
+              {searchStatus}
+            </p>
+          )}
+          <div className="search-results">
+            {searchResults.map((result) => (
+              <article
+                className="result-card"
+                key={`${result.mediaType}-${result.tmdbId}`}
+              >
+                {result.posterUrl ? (
+                  <img src={result.posterUrl} alt="" loading="lazy" />
+                ) : (
+                  <div className="poster-placeholder">TUXTELLY</div>
+                )}
+                <div className="result-copy">
+                  <span className="eyebrow">
+                    {result.mediaType === "tv" ? "SERIES" : "MOVIE"}
+                    {result.year ? ` · ${result.year}` : ""}
+                  </span>
+                  <h2>{result.title}</h2>
+                  <p>{result.overview || "No description available."}</p>
+                  <div className="result-services">
+                    {result.matchedServices.map((match) => {
+                      const service = config.services.find(
+                        (entry) => entry.id === match.serviceId,
+                      );
+                      return service ? (
+                        <button
+                          key={`${match.serviceId}-${match.availability}`}
+                          onClick={() => void launchService(service)}
+                        >
+                          Open {service.name} · {offerLabel(match.availability)}
+                        </button>
+                      ) : null;
+                    })}
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+          {searchResults.length > 0 && (
+            <p className="attribution">
+              Movie and TV data provided by TMDB. Streaming availability powered
+              by JustWatch.
+            </p>
+          )}
+          {searchResults.length === 0 && !searchStatus && searchQuery && (
+            <p className="hint">
+              No matching titles found for the included services.
+            </p>
+          )}
+        </main>
+      )}
       {view === "settings" && (
         <main className="settings">
           <p className="eyebrow">MAKE IT YOURS</p>
@@ -485,6 +748,106 @@ export function App({ client }: { client: Client }) {
           <p className="subtitle">
             Changes stay on this Firefox profile. Save when you’re ready.
           </p>
+          <section className="panel">
+            <h2>Global search</h2>
+            <p className="hint">
+              Your TMDB key is stored only in this Firefox profile and used by
+              the extension background. It is not included in settings exports
+              or diagnostics. Anyone with access to this Firefox profile can
+              inspect it.
+            </p>
+            {client.kind === "extension" ? (
+              <>
+                <label>
+                  TMDB API key
+                  <input
+                    type="password"
+                    autoComplete="off"
+                    value={tmdbKey}
+                    placeholder={
+                      tmdbConfigured
+                        ? "Key saved · enter a new key to replace it"
+                        : "Enter TMDB API key"
+                    }
+                    onChange={(event) => setTmdbKey(event.target.value)}
+                  />
+                </label>
+                <div className="button-row">
+                  <button onClick={() => void testTmdb()}>Test key</button>
+                  <button
+                    className="primary"
+                    onClick={() => void saveTmdbSettings()}
+                  >
+                    {tmdbKey
+                      ? "Save key and search settings"
+                      : "Save search settings"}
+                  </button>
+                  {tmdbConfigured && (
+                    <button
+                      className="danger"
+                      onClick={() => void removeTmdbKey()}
+                    >
+                      Remove key
+                    </button>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="button-row">
+                <button
+                  className="primary"
+                  onClick={() => void saveTmdbSettings()}
+                >
+                  Save search services
+                </button>
+                <span className="hint">
+                  Manage the API key in Firefox extension Settings.
+                </span>
+              </div>
+            )}
+            <div className="form-row">
+              <label>
+                Availability region (country code)
+                <input
+                  maxLength={2}
+                  value={searchRegion}
+                  onChange={(event) =>
+                    setSearchRegion(
+                      event.target.value
+                        .toUpperCase()
+                        .replace(/[^A-Z]/g, "")
+                        .slice(0, 2),
+                    )
+                  }
+                />
+              </label>
+            </div>
+            <fieldset className="search-service-settings">
+              <legend>Services to include in search</legend>
+              {config.services
+                .filter((service) => service.enabled)
+                .map((service) => (
+                  <label className="check" key={service.id}>
+                    <input
+                      type="checkbox"
+                      checked={searchServices.includes(service.id)}
+                      onChange={(event) =>
+                        setSearchServices((old) =>
+                          event.target.checked
+                            ? [...old, service.id]
+                            : old.filter((id) => id !== service.id),
+                        )
+                      }
+                    />
+                    {service.name}
+                  </label>
+                ))}
+            </fieldset>
+            <p className="hint">
+              TMDB reports catalog availability by region; it cannot verify your
+              account plan. Results include TMDB and JustWatch attribution.
+            </p>
+          </section>
           <section className="panel">
             <h2>Home & display</h2>
             <p className="hint">

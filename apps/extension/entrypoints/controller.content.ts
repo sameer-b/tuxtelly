@@ -72,9 +72,16 @@ export default defineContentScript({
       const parsed = requestSchema.safeParse(event.data.message);
       if (
         !parsed.success ||
-        !["state", "open", "home", "cycle", "settings"].includes(
-          parsed.data.type,
-        )
+        ![
+          "state",
+          "open",
+          "home",
+          "cycle",
+          "settings",
+          "searchSettings",
+          "saveSearchSettings",
+          "search",
+        ].includes(parsed.data.type)
       )
         return;
       const id = event.data.id;

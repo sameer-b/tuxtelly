@@ -4,11 +4,15 @@ import {
   allowedServiceUrl,
   configSchema,
   defaultConfig,
+  allOfferTypes,
   isLauncher,
+  migrateHulu,
   migratePrimeVideo,
   originPattern,
   requestSchema,
+  matchServiceOffers,
   ServiceTabs,
+  streamingOfferTypes,
   VERSION,
   type Config,
   type ManagedTab,
@@ -27,12 +31,116 @@ export default defineBackground(() => {
   let config: Config = structuredClone(defaultConfig);
   let recovery: string | undefined;
   let lastUsedServiceId: string | undefined;
+  const tmdbBase = "https://api.themoviedb.org/3";
+  const searchCache = new Map<string, { at: number; results: unknown[] }>();
+  const fetchTmdb = async <T>(path: string, apiKey: string): Promise<T> => {
+    const url = new URL(`${tmdbBase}${path}`);
+    url.searchParams.set("api_key", apiKey);
+    const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!response.ok) {
+      if (response.status === 401)
+        throw new Error(
+          "TMDB rejected this API key. Check the key in Settings.",
+        );
+      if (response.status === 429)
+        throw new Error(
+          "TMDB rate limit reached. Wait a moment and try again.",
+        );
+      throw new Error(`TMDB request failed (${response.status}).`);
+    }
+    return (await response.json()) as T;
+  };
+  async function tmdbSearch(
+    query: string,
+    region: string,
+    serviceIds: string[],
+    includePaidOffers: boolean,
+  ) {
+    const stored = await browser.storage.local.get("tmdbApiKey");
+    const apiKey =
+      typeof stored.tmdbApiKey === "string" ? stored.tmdbApiKey.trim() : "";
+    if (!apiKey)
+      throw new Error("Add your TMDB API key in Settings to search.");
+    const key = `${query.trim().toLowerCase()}|${region}|${includePaidOffers}|${[...serviceIds].sort().join(",")}`;
+    const cached = searchCache.get(key);
+    if (cached && Date.now() - cached.at < 300_000) return cached.results;
+    const selectedServices = serviceIds.flatMap((serviceId) => {
+      const service = config.services.find((entry) => entry.id === serviceId);
+      return service ? [service] : [];
+    });
+    const found = await fetchTmdb<{ results?: Array<Record<string, unknown>> }>(
+      `/search/multi?query=${encodeURIComponent(query)}&include_adult=false&region=${region}`,
+      apiKey,
+    );
+    const candidates = (found.results ?? [])
+      .filter(
+        (item) =>
+          (item.media_type === "movie" || item.media_type === "tv") &&
+          typeof item.id === "number",
+      )
+      .slice(0, 12);
+    const matched: unknown[] = [];
+    for (let i = 0; i < candidates.length; i += 4) {
+      await Promise.all(
+        candidates.slice(i, i + 4).map(async (item) => {
+          const media = item.media_type as "movie" | "tv";
+          const availability = await fetchTmdb<{
+            results?: Record<
+              string,
+              {
+                flatrate?: { provider_id: number; provider_name: string }[];
+                free?: { provider_id: number; provider_name: string }[];
+                ads?: { provider_id: number; provider_name: string }[];
+                rent?: { provider_id: number; provider_name: string }[];
+                buy?: { provider_id: number; provider_name: string }[];
+              }
+            >;
+          }>(`/${media}/${item.id}/watch/providers`, apiKey);
+          const offers = availability.results?.[region];
+          if (!offers) return;
+          const categories = includePaidOffers
+            ? allOfferTypes
+            : streamingOfferTypes;
+          const matchedServices = matchServiceOffers(
+            selectedServices,
+            offers,
+            categories,
+          );
+          if (!matchedServices.length) return;
+          matched.push({
+            tmdbId: item.id,
+            mediaType: media,
+            title: String(item.title ?? item.name ?? "Untitled"),
+            year:
+              String(item.release_date ?? item.first_air_date ?? "").slice(
+                0,
+                4,
+              ) || null,
+            overview: String(item.overview ?? ""),
+            posterUrl:
+              typeof item.poster_path === "string"
+                ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+                : null,
+            matchedServices,
+          });
+        }),
+      );
+    }
+    const results = candidates.flatMap((candidate) =>
+      matched.filter(
+        (item) => (item as { tmdbId: number }).tmdbId === candidate.id,
+      ),
+    );
+    searchCache.set(key, { at: Date.now(), results });
+    return results;
+  }
   const ready = browser.storage.local
     .get([
       "config",
       "lastValidConfig",
       "lastUsedServiceId",
       "primeServiceMigration",
+      "huluServiceMigration",
     ])
     .then(async (stored) => {
       if (typeof stored.lastUsedServiceId === "string")
@@ -54,6 +162,14 @@ export default defineBackground(() => {
           config,
           lastValidConfig: config,
           primeServiceMigration: true,
+        });
+      }
+      if (canMigrate && stored.huluServiceMigration !== true) {
+        config = migrateHulu(config);
+        await browser.storage.local.set({
+          config,
+          lastValidConfig: config,
+          huluServiceMigration: true,
         });
       }
     });
@@ -323,6 +439,107 @@ export default defineBackground(() => {
               ? { role: "service", service, config }
               : { role: "extension" },
         };
+      if (message.type === "searchSettings") {
+        if (!own && !launcher)
+          throw new Error("Only TuxTelly can access search settings.");
+        const stored = await browser.storage.local.get([
+          "tmdbApiKey",
+          "tmdbSearchSettings",
+          "tmdbHuluSearchMigration",
+        ]);
+        const saved = stored.tmdbSearchSettings as
+          { region?: string; serviceIds?: string[] } | undefined;
+        const huluServices = config.services.filter((service) =>
+          `${service.id} ${service.name} ${service.url}`
+            .toLowerCase()
+            .includes("hulu"),
+        );
+        const defaultServiceIds = [
+          ...new Set(
+            config.services
+              .filter(
+                (service) => service.enabled && service.adapter !== "generic",
+              )
+              .concat(huluServices.filter((service) => service.enabled))
+              .map((service) => service.id),
+          ),
+        ];
+        const serviceIds = [...(saved?.serviceIds ?? defaultServiceIds)];
+        if (
+          stored.tmdbHuluSearchMigration !== true &&
+          huluServices.some((service) => service.enabled)
+        ) {
+          for (const service of huluServices)
+            if (service.enabled && !serviceIds.includes(service.id))
+              serviceIds.push(service.id);
+          await browser.storage.local.set({
+            tmdbHuluSearchMigration: true,
+            tmdbSearchSettings: {
+              region: saved?.region ?? "US",
+              serviceIds,
+            },
+          });
+        }
+        return {
+          ok: true,
+          data: {
+            configured:
+              typeof stored.tmdbApiKey === "string" &&
+              stored.tmdbApiKey.length > 0,
+            region: saved?.region ?? "US",
+            serviceIds,
+          },
+        };
+      }
+      if (message.type === "saveSearchSettings") {
+        if (!own && (!launcher || message.apiKey.trim()))
+          throw new Error("Edit the TMDB key in the extension settings page.");
+        if (message.apiKey.trim())
+          await browser.storage.local.set({
+            tmdbApiKey: message.apiKey.trim(),
+          });
+        await browser.storage.local.set({
+          tmdbSearchSettings: {
+            region: message.region,
+            serviceIds: message.serviceIds,
+          },
+        });
+        searchCache.clear();
+        return { ok: true };
+      }
+      if (message.type === "removeTmdbKey") {
+        if (!own)
+          throw new Error(
+            "Remove the TMDB key in the extension settings page.",
+          );
+        await browser.storage.local.remove("tmdbApiKey");
+        searchCache.clear();
+        return { ok: true };
+      }
+      if (message.type === "testTmdb") {
+        if (!own && !launcher)
+          throw new Error("Only TuxTelly can test TMDB settings.");
+        if (!message.apiKey.trim())
+          throw new Error("Enter a TMDB API key first.");
+        await fetchTmdb<{ results?: unknown[] }>(
+          `/search/multi?query=star%20wars&page=1`,
+          message.apiKey.trim(),
+        );
+        return { ok: true, data: { message: "TMDB connection succeeded." } };
+      }
+      if (message.type === "search") {
+        if (!own && !launcher)
+          throw new Error("Only TuxTelly can search titles.");
+        return {
+          ok: true,
+          data: await tmdbSearch(
+            message.query,
+            message.region,
+            message.serviceIds,
+            message.includePaidOffers,
+          ),
+        };
+      }
       if (message.type === "state") {
         if (!own && !launcher)
           throw new Error("Only the launcher can request settings.");

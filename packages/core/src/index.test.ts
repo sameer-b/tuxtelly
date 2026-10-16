@@ -5,13 +5,19 @@ import {
   configSchema,
   createDiagnosticReport,
   defaultConfig,
+  allOfferTypes,
   isLauncher,
+  matchServiceOffers,
   matchAction,
+  migrateHulu,
   migratePrimeVideo,
   nearest,
   originPattern,
   parseConfig,
+  requestSchema,
+  resolveProviderIds,
   ServiceTabs,
+  streamingOfferTypes,
   type ManagedTab,
   type TabPort,
 } from "./index";
@@ -46,6 +52,20 @@ describe("configuration boundaries", () => {
     (config.preferences as { theme: string }).theme = "unknown";
     expect(configSchema.safeParse(config).success).toBe(false);
   });
+  it("adds Hulu by default and migrates existing configurations idempotently", () => {
+    expect(
+      defaultConfig.services.some((service) => service.id === "hulu"),
+    ).toBe(true);
+    const existing = structuredClone(defaultConfig);
+    existing.services = existing.services.filter(
+      (service) => service.id !== "hulu",
+    );
+    const upgraded = migrateHulu(existing);
+    expect(upgraded.services.some((service) => service.id === "hulu")).toBe(
+      true,
+    );
+    expect(migrateHulu(upgraded)).toBe(upgraded);
+  });
   it("keeps service URLs and activity out of diagnostic reports", () => {
     const report = createDiagnosticReport(
       defaultConfig,
@@ -56,7 +76,7 @@ describe("configuration boundaries", () => {
       "Firefox test",
       "2026-10-16T00:00:00.000Z",
     );
-    expect(report.configuredServices).toBe(5);
+    expect(report.configuredServices).toBe(6);
     expect(JSON.stringify(report)).not.toContain("youtube.com");
     expect(JSON.stringify(report)).not.toContain("lastUsedServiceId");
   });
@@ -132,6 +152,118 @@ describe("configuration boundaries", () => {
     expect(isLauncher(config, "http://localhost:5173/other")).toBe(false);
     expect(isLauncher(config, "http://localhost:5174/tv/")).toBe(false);
     expect(originPattern(config.launcherUrl)).toBe("http://localhost/*");
+  });
+});
+
+describe("global search request boundary", () => {
+  it("keeps rental and purchase categories opt-in", () => {
+    expect(streamingOfferTypes).toEqual(["flatrate", "free", "ads"]);
+    expect(allOfferTypes).toEqual(["flatrate", "free", "ads", "rent", "buy"]);
+  });
+  it("matches typography variants without crossing into similarly named providers", () => {
+    const mappings = resolveProviderIds(
+      [
+        {
+          id: "disney",
+          adapter: "disney",
+          name: "Disney+",
+          url: "https://www.disneyplus.com/",
+        },
+        {
+          id: "youtube",
+          adapter: "youtube",
+          name: "YouTube",
+          url: "https://www.youtube.com/",
+        },
+      ],
+      [
+        { provider_id: 337, provider_name: "Disney Plus" },
+        { provider_id: 338, provider_name: "Disney +" },
+        { provider_id: 2739, provider_name: "Disney Plus Basic with Ads" },
+        { provider_id: 339, provider_name: "Disney Channel" },
+        { provider_id: 192, provider_name: "YouTube" },
+        { provider_id: 2528, provider_name: "YouTube TV" },
+      ],
+    );
+    expect(mappings.get("disney")).toEqual([337, 338, 2739]);
+    expect(mappings.get("youtube")).toEqual([192]);
+  });
+  it("matches services against the providers on each title offer", () => {
+    const services = [
+      {
+        id: "disney",
+        adapter: "disney",
+        name: "Disney+",
+        url: "https://www.disneyplus.com/",
+      },
+      {
+        id: "hulu",
+        adapter: "generic",
+        name: "Hulu",
+        url: "https://www.hulu.com/",
+      },
+      {
+        id: "prime",
+        adapter: "prime",
+        name: "Prime Video",
+        url: "https://www.primevideo.com/",
+      },
+    ];
+    const offers = {
+      flatrate: [
+        { provider_id: 2739, provider_name: "Disney Plus Basic with Ads" },
+        { provider_id: 15, provider_name: "Hulu with Ads" },
+      ],
+      buy: [{ provider_id: 10, provider_name: "Amazon Video" }],
+    };
+    expect(matchServiceOffers(services, offers, streamingOfferTypes)).toEqual([
+      { serviceId: "disney", availability: "flatrate" },
+      { serviceId: "hulu", availability: "flatrate" },
+    ]);
+    expect(matchServiceOffers(services, offers, allOfferTypes)).toEqual([
+      { serviceId: "disney", availability: "flatrate" },
+      { serviceId: "hulu", availability: "flatrate" },
+      { serviceId: "prime", availability: "buy" },
+    ]);
+  });
+  it("accepts a bounded search request with an ISO region", () => {
+    expect(
+      requestSchema.parse({
+        type: "search",
+        query: "Dune",
+        region: "US",
+        serviceIds: ["prime"],
+        includePaidOffers: false,
+      }),
+    ).toEqual({
+      type: "search",
+      query: "Dune",
+      region: "US",
+      serviceIds: ["prime"],
+      includePaidOffers: false,
+    });
+  });
+  it("rejects short searches and malformed regions", () => {
+    expect(
+      requestSchema.safeParse({
+        type: "search",
+        query: "x",
+        region: "USA",
+        serviceIds: ["prime"],
+        includePaidOffers: false,
+      }).success,
+    ).toBe(false);
+  });
+  it("limits TMDB credentials to dedicated messages rather than app config", () => {
+    expect(
+      requestSchema.safeParse({
+        type: "saveSearchSettings",
+        apiKey: "secret",
+        region: "US",
+        serviceIds: [],
+      }).success,
+    ).toBe(true);
+    expect(JSON.stringify(defaultConfig)).not.toContain("apiKey");
   });
 });
 describe("input contexts", () => {

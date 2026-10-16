@@ -25,7 +25,8 @@ export default defineConfig({
     },
     options_ui: { page: "home.html?settings=1", open_in_tab: true },
     content_security_policy: {
-      extension_pages: "script-src 'self'; object-src 'none'; base-uri 'none'",
+      extension_pages:
+        "script-src 'self'; object-src 'none'; base-uri 'none'; img-src 'self' data: https://image.tmdb.org",
     },
   },
 });

@@ -1,6 +1,11 @@
 import { z } from "zod";
+export {
+  matchServiceOffers,
+  normalizeProviderName,
+  resolveProviderIds,
+} from "./providers";
 
-export const VERSION = "0.2.9";
+export const VERSION = "0.2.14";
 export const PROTOCOL = 1;
 export function webUrl(value: string): URL {
   const url = new URL(value);
@@ -195,6 +200,14 @@ export const defaultConfig: Config = configSchema.parse({
       adapter: "prime",
       color: "#38b6e8",
     },
+    {
+      id: "hulu",
+      name: "Hulu",
+      url: "https://www.hulu.com/",
+      origins: ["https://www.hulu.com"],
+      adapter: "generic",
+      color: "#1ce783",
+    },
   ],
   bindings: [
     { key: "Home", action: "home" },
@@ -219,6 +232,19 @@ export function migratePrimeVideo(config: Config): Config {
   );
   if (!prime) return config;
   return { ...config, services: [...config.services, structuredClone(prime)] };
+}
+export function migrateHulu(config: Config): Config {
+  if (
+    config.services.some((service) =>
+      `${service.id} ${service.name} ${service.url}`
+        .toLowerCase()
+        .includes("hulu"),
+    )
+  )
+    return config;
+  const hulu = defaultConfig.services.find((service) => service.id === "hulu");
+  if (!hulu) return config;
+  return { ...config, services: [...config.services, structuredClone(hulu)] };
 }
 export function bindingId(
   key: Pick<Binding, "key" | "alt" | "ctrl" | "shift" | "meta">,
@@ -299,7 +325,38 @@ export const requestSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("settings") }).strict(),
   z.object({ type: z.literal("save"), config: configSchema }).strict(),
   z.object({ type: z.literal("context") }).strict(),
+  z.object({ type: z.literal("searchSettings") }).strict(),
+  z
+    .object({
+      type: z.literal("saveSearchSettings"),
+      apiKey: z.string().max(256),
+      region: z.string().regex(/^[A-Z]{2}$/),
+      serviceIds: z
+        .array(z.string().max(64))
+        .max(40)
+        .refine((ids) => new Set(ids).size === ids.length),
+    })
+    .strict(),
+  z
+    .object({ type: z.literal("testTmdb"), apiKey: z.string().max(256) })
+    .strict(),
+  z.object({ type: z.literal("removeTmdbKey") }).strict(),
+  z
+    .object({
+      type: z.literal("search"),
+      query: z.string().trim().min(2).max(120),
+      region: z.string().regex(/^[A-Z]{2}$/),
+      serviceIds: z
+        .array(z.string().max(64))
+        .min(1)
+        .max(40)
+        .refine((ids) => new Set(ids).size === ids.length),
+      includePaidOffers: z.boolean(),
+    })
+    .strict(),
 ]);
+export const streamingOfferTypes = ["flatrate", "free", "ads"] as const;
+export const allOfferTypes = [...streamingOfferTypes, "rent", "buy"] as const;
 export type Request = z.infer<typeof requestSchema>;
 export type State = {
   config: Config;
