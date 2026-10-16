@@ -46,16 +46,56 @@ profile or desktop startup. Settings and any provider logins stay in this profil
 The preview extension is temporary and must be loaded again after Firefox restarts.
 The profiles and credentials remain local to the laptop.
 
+Home and service navigation use the configured remote keys. Defaults are `Home`
+to return to TuxTelly, `F8` to open the service switcher, and Firefox's
+`Alt+Shift+H` extension shortcut as a browser-wide Home fallback. Firefox or KDE
+may reserve some remote keys; use TuxTelly's **Remote** page to inspect captured
+keys and Firefox's **Manage Extension Shortcuts** page to change the Home command.
+
+On Home, pinned services appear first; use **Settings → Services** to pin, hide,
+rename, and move services. **Resume** reopens the last used enabled service.
+Settings explain why site access is requested, while sign-in always happens on
+the provider's own page. **Download private diagnostics** exports app/browser
+versions and counts, not service URLs, credentials, cookies, viewing history, or
+typed input. Review the file before sharing it.
+
 ## Persistent Firefox setup
 
 A normal Firefox installation requires a Mozilla-signed extension. The package
 created by `pnpm package` is explicitly unsigned and intended for development.
-After a persistent signed build is available, create a dedicated Firefox profile
-and configure KDE autostart with a copy of
-`integrations/fedora/tuxtelly.desktop.example`. The extension opens its bundled
-Home when Firefox starts. Keep the profile persistent so provider logins survive
-restarts. Configure browser fullscreen and laptop lid or
-sleep behavior through KDE, then verify suspend/resume on the TV.
+After a persistent signed build is available, run
+`integrations/fedora/setup-tv-profile.sh` from KDE. It creates a named Firefox
+profile and installs a KDE autostart entry without changing the regular profile.
+The script leaves an existing autostart file untouched. Start the new profile
+once with `firefox --no-remote -P TuxTelly`, let the signed extension install,
+then enable **Open TuxTelly Home when this Firefox profile starts** in TuxTelly
+settings and save. This setting is opt-in and stored per profile. The included
+`integrations/fedora/remove-tv-autostart.sh` disables automatic launch while
+keeping the profile and provider logins. Configure browser fullscreen and laptop
+lid or sleep behavior through KDE, then verify suspend/resume on the TV.
+
+For self-distribution, create a Mozilla Add-ons developer account and generate
+unlisted signing API credentials. Build the extension, then set credentials only
+in the current shell and sign it:
+
+```sh
+pnpm build
+export WEB_EXT_API_KEY='your AMO API key'
+export WEB_EXT_API_SECRET='your AMO API secret'
+pnpm sign:extension
+```
+
+The signed XPI is written to `artifacts/signed/`. Copy it to the Fedora laptop and
+run `integrations/fedora/install-signed-extension.sh /path/to/tuxtelly.xpi`.
+That script uses Firefox's enterprise extension policy and `sudo`; it installs a
+Mozilla-signed XPI and does not disable signature checks. The policy is system
+wide and installs TuxTelly as a normal, user-removable add-on in Firefox profiles.
+To remove it, run `integrations/fedora/remove-signed-extension.sh`. Restart Firefox
+after install or removal. Site permissions remain separately controlled by the
+user in TuxTelly settings.
+
+The signing credentials are not stored in the repository. Mozilla account setup,
+first-time signing review, and provider site permissions still require the owner.
 
 Use KDE to choose the HDMI audio sink and control system volume. TuxTelly's
 player volume controls are separate. Remove the autostart file to undo startup

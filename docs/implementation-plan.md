@@ -24,6 +24,10 @@ scope; the initial preview does not satisfy all exit criteria.
 - Phase 6: Fedora diagnostics, local preview script, packaging, and installation
   documentation exist. Extension signing, performance/soak tests, and release
   qualification remain pending; Caddy/LXC is optional for later multi-TV sharing.
+- Follow-up Home improvements: pinned services, two-way ordering, last-used resume,
+  visible access status, onboarding guidance, action-labeled key mapping, and a
+  privacy-limited diagnostic export are implemented. AMO signing and Fedora policy
+  install/removal scripts are prepared; credentials and TV-side acceptance remain.
 
 Controlled tests: 20 local unit tests and 15 Firefox integration checks on the
 reference Fedora laptop passed. See [acceptance](acceptance.md) for detailed boundaries.

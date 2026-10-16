@@ -25,9 +25,12 @@ const tag = "tuxtelly.service";
 export default defineBackground(() => {
   let config: Config = structuredClone(defaultConfig);
   let recovery: string | undefined;
+  let lastUsedServiceId: string | undefined;
   const ready = browser.storage.local
-    .get(["config", "lastValidConfig"])
+    .get(["config", "lastValidConfig", "lastUsedServiceId"])
     .then((stored) => {
+      if (typeof stored.lastUsedServiceId === "string")
+        lastUsedServiceId = stored.lastUsedServiceId;
       if (stored.config === undefined) return;
       const parsed = configSchema.safeParse(stored.config);
       if (parsed.success) config = parsed.data;
@@ -135,6 +138,8 @@ export default defineBackground(() => {
       const windowId = await managedWindow(hint);
       await pauseOthers(windowId, service.id);
       const tab = await port.open(service, windowId);
+      lastUsedServiceId = service.id;
+      await browser.storage.local.set({ lastUsedServiceId });
       await inject(tab.id);
       if (
         (await sessions
@@ -306,6 +311,7 @@ export default defineBackground(() => {
             config,
             grantedOrigins: (await browser.permissions.getAll()).origins ?? [],
             openServices,
+            lastUsedServiceId,
             version: VERSION,
             recovery,
           },
@@ -358,7 +364,11 @@ export default defineBackground(() => {
       .catch(() => browser.runtime.openOptionsPage());
   });
   browser.runtime.onStartup.addListener(() => {
-    void ready.then(() => home()).catch(() => undefined);
+    void ready
+      .then(() =>
+        config.preferences.openHomeAtStartup ? home() : Promise.resolve(),
+      )
+      .catch(() => undefined);
   });
   browser.commands.onCommand.addListener((command) => {
     void ready

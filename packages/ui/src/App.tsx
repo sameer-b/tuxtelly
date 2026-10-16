@@ -8,6 +8,7 @@ import {
 import {
   actions,
   configSchema,
+  createDiagnosticReport,
   defaultConfig,
   eventBinding,
   isEditing,
@@ -172,6 +173,38 @@ export function App({ client }: { client: Client }) {
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
+  function exportDiagnostics() {
+    const report = createDiagnosticReport(
+      config,
+      {
+        version: state?.version ?? VERSION,
+        grantedOrigins: state?.grantedOrigins ?? [],
+      },
+      navigator.userAgent,
+    );
+    const url = URL.createObjectURL(
+      new Blob([JSON.stringify(report, null, 2)], {
+        type: "application/json",
+      }),
+    );
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "tuxtelly-diagnostics.json";
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function hasServiceAccess(service: Service) {
+    const granted = new Set(state?.grantedOrigins ?? []);
+    return service.origins.every((origin) =>
+      granted.has(originPattern(origin)),
+    );
+  }
+  const visibleServices = [...config.services]
+    .filter((service) => service.enabled)
+    .sort((a, b) => Number(b.favorite) - Number(a.favorite));
+  const lastUsed = config.services.find(
+    (service) => service.id === state?.lastUsedServiceId && service.enabled,
+  );
   return (
     <div
       className="app"
@@ -244,19 +277,51 @@ export function App({ client }: { client: Client }) {
               All your favorites. One remote. Make yourself at home.
             </p>
           </div>
+          <section className="setup-guide" aria-labelledby="setup-title">
+            <div>
+              <p className="eyebrow">FIRST TIME HERE?</p>
+              <h2 id="setup-title">Three steps to your shows</h2>
+              <p>
+                Choose a service, allow TuxTelly to control that site, then sign
+                in on the service’s own page.
+              </p>
+            </div>
+            <ol>
+              <li>
+                <span className="step-done">1</span> Choose a service below or
+                add one in Settings.
+              </li>
+              <li>
+                <span className="step-done">2</span> Grant site access in
+                Settings. This enables navigation and player controls.
+              </li>
+              <li>
+                <span className="step-done">3</span> Sign in directly with the
+                provider. TuxTelly never asks for your password.
+              </li>
+            </ol>
+            <div className="button-row setup-actions">
+              <button onClick={settings}>Set up services</button>
+              {lastUsed && (
+                <button
+                  className="primary"
+                  onClick={() =>
+                    void request({ type: "open", serviceId: lastUsed.id })
+                  }
+                >
+                  Resume {lastUsed.name}
+                </button>
+              )}
+            </div>
+          </section>
           <div className="section-label">
             <h2>Your services</h2>
-            <span>
-              {config.services.filter((service) => service.enabled).length} in
-              your collection
-            </span>
+            <span>{visibleServices.length} in your collection</span>
           </div>
           <div className="services">
-            {config.services
-              .filter((service) => service.enabled)
-              .map((service, index) => (
+            {visibleServices.map((service, index) => (
+              <div className="service-entry" key={service.id}>
                 <button
-                  key={service.id}
                   data-service={service.id}
                   className="service-card"
                   style={{ "--service-color": service.color } as CSSProperties}
@@ -277,6 +342,9 @@ export function App({ client }: { client: Client }) {
                     {state?.openServices.includes(service.id) && (
                       <span className="open-tag">OPEN</span>
                     )}
+                    {hasServiceAccess(service) && (
+                      <span className="access-tag">READY</span>
+                    )}
                   </div>
                   <div className={`service-symbol ${service.adapter}`}>
                     {service.adapter === "youtube"
@@ -289,11 +357,51 @@ export function App({ client }: { client: Client }) {
                   </div>
                   <div className="card-bottom">
                     <span>{service.name}</span>
-                    <span aria-hidden="true">↗</span>
+                    <span>
+                      Open <span aria-hidden="true">↗</span>
+                    </span>
                   </div>
                 </button>
-              ))}
+                {client.kind === "extension" && (
+                  <button
+                    className="favorite-toggle"
+                    aria-label={
+                      service.favorite
+                        ? `Unpin ${service.name}`
+                        : `Pin ${service.name}`
+                    }
+                    aria-pressed={service.favorite}
+                    onClick={() => {
+                      const index = config.services.findIndex(
+                        (item) => item.id === service.id,
+                      );
+                      updateService(index, { favorite: !service.favorite });
+                      void request({
+                        type: "save",
+                        config: configSchema.parse({
+                          ...config,
+                          services: config.services.map((item) =>
+                            item.id === service.id
+                              ? { ...item, favorite: !service.favorite }
+                              : item,
+                          ),
+                        }),
+                      }).then(() => refresh());
+                    }}
+                  >
+                    {service.favorite ? "★" : "☆"}
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
+          {client.kind === "extension" && (
+            <p className="home-shortcuts">
+              <kbd>Home</kbd> Return here · <kbd>F8</kbd> Open the service
+              switcher · <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd>{" "}
+              Firefox-wide Home
+            </p>
+          )}
           <div className="under-library">
             <span className="quiet">
               {connected
@@ -388,6 +496,26 @@ export function App({ client }: { client: Client }) {
             <label className="check">
               <input
                 type="checkbox"
+                checked={config.preferences.openHomeAtStartup}
+                onChange={(e) =>
+                  setConfig({
+                    ...config,
+                    preferences: {
+                      ...config.preferences,
+                      openHomeAtStartup: e.target.checked,
+                    },
+                  })
+                }
+              />
+              Open TuxTelly Home when this Firefox profile starts
+            </label>
+            <p className="hint">
+              Enable this in the dedicated TV profile to open TuxTelly after
+              login. The setting is saved per Firefox profile.
+            </p>
+            <label className="check">
+              <input
+                type="checkbox"
                 checked={config.preferences.fullscreenWindow}
                 onChange={(e) =>
                   setConfig({
@@ -455,7 +583,12 @@ export function App({ client }: { client: Client }) {
               <details key={service.id} className="service-settings">
                 <summary>
                   {service.name}
-                  <span>{service.enabled ? "Enabled" : "Hidden"}</span>
+                  <span>
+                    {service.enabled ? "Enabled" : "Hidden"} ·{" "}
+                    {hasServiceAccess(service)
+                      ? "site access granted"
+                      : "site access needed"}
+                  </span>
                 </summary>
                 <div className="form-row">
                   <label>
@@ -537,6 +670,16 @@ export function App({ client }: { client: Client }) {
                 <label className="check">
                   <input
                     type="checkbox"
+                    checked={service.favorite}
+                    onChange={(e) =>
+                      updateService(index, { favorite: e.target.checked })
+                    }
+                  />
+                  Pin near the top of Home
+                </label>
+                <label className="check">
+                  <input
+                    type="checkbox"
                     checked={service.backgroundAudio}
                     onChange={(e) =>
                       updateService(index, {
@@ -558,6 +701,7 @@ export function App({ client }: { client: Client }) {
                                 ? `Access granted for ${service.name}.`
                                 : "Access was not granted.",
                             );
+                            if (granted) void refresh();
                           })
                           .catch(() =>
                             setMessage(
@@ -583,6 +727,19 @@ export function App({ client }: { client: Client }) {
                     }}
                   >
                     Move up
+                  </button>
+                  <button
+                    disabled={index === config.services.length - 1}
+                    onClick={() => {
+                      const services = [...config.services];
+                      [services[index], services[index + 1]] = [
+                        services[index + 1],
+                        services[index],
+                      ];
+                      setConfig({ ...config, services });
+                    }}
+                  >
+                    Move down
                   </button>
                   <button
                     className="danger"
@@ -619,6 +776,7 @@ export function App({ client }: { client: Client }) {
                       adapter: "generic",
                       color: "#5be5bc",
                       enabled: true,
+                      favorite: false,
                       backgroundAudio: false,
                     },
                   ],
@@ -667,6 +825,25 @@ export function App({ client }: { client: Client }) {
               }}
             />
           </section>
+          <section className="panel">
+            <h2>Privacy & troubleshooting</h2>
+            <p className="hint">
+              Settings exports contain your service addresses and layout, but
+              never provider passwords or cookies. Diagnostics include basic
+              app/browser versions and counts only; review the downloaded file
+              before sharing it.
+            </p>
+            <div className="button-row">
+              <button onClick={exportDiagnostics}>
+                Download private diagnostics
+              </button>
+            </div>
+            <p className="hint">
+              TuxTelly cannot read your provider passwords. Firefox stores your
+              sessions; site access lets the extension add remote navigation and
+              player controls to the selected sites.
+            </p>
+          </section>
           <div className="save-bar">
             <button
               className="primary"
@@ -703,7 +880,8 @@ export function App({ client }: { client: Client }) {
           </span>
         </div>
         <span>
-          TuxTelly <span className="quiet">{VERSION} · preview</span>
+          TuxTelly{" "}
+          <span className="quiet">{state?.version ?? VERSION} · preview</span>
         </span>
       </footer>
     </div>
@@ -720,6 +898,21 @@ function Remote({
   onSave: () => Promise<void>;
   editable: boolean;
 }) {
+  const actionNames: Record<(typeof actions)[number], string> = {
+    home: "Return to TuxTelly Home",
+    switcher: "Open service switcher",
+    next: "Next service tab",
+    previous: "Previous service tab",
+    back: "Back or close fullscreen",
+    playPause: "Play / pause",
+    seekBackward: "Seek backward",
+    seekForward: "Seek forward",
+    captions: "Toggle captions",
+    fullscreen: "Toggle player fullscreen",
+    mute: "Mute player",
+    volumeUp: "Increase player volume",
+    volumeDown: "Decrease player volume",
+  };
   const [recording, setRecording] = useState(false);
   const [key, setKey] = useState<ReturnType<typeof eventBinding> | null>(null);
   const [code, setCode] = useState("");
@@ -789,7 +982,9 @@ function Remote({
                 }
               >
                 {actions.map((value) => (
-                  <option key={value}>{value}</option>
+                  <option key={value} value={value}>
+                    {actionNames[value]}
+                  </option>
                 ))}
               </select>
             </label>
@@ -834,7 +1029,7 @@ function Remote({
                   .filter(Boolean)
                   .join(" + ")}
               </kbd>
-              <span>{binding.action}</span>
+              <span>{actionNames[binding.action]}</span>
               {editable && (
                 <button
                   aria-label={`Remove ${binding.key} shortcut`}
@@ -860,8 +1055,12 @@ function Remote({
         </button>
       )}
       <p className="hint">
-        System volume uses KDE. Configure a browser-wide Home shortcut in
-        Firefox → Add-ons → Manage Extension Shortcuts.
+        Home returns to TuxTelly. F8 opens the service switcher. Alt+Shift+H is
+        Firefox’s browser-wide Home shortcut; change it in Firefox → Add-ons →
+        Manage Extension Shortcuts if another program uses that key. Left/right
+        seek only while the player has focus; elsewhere the arrows navigate the
+        page. System volume belongs to KDE; these volume keys adjust the active
+        HTML video only.
       </p>
     </main>
   );

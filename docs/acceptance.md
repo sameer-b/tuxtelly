@@ -11,18 +11,27 @@ Firefox 156.0 at `/usr/bin/firefox`, x86-64, approximately 7.4 GiB usable RAM.
 The browser ran headless in a fresh test profile via geckodriver 0.37.1; the test
 runner was on macOS over SSH. The regular Firefox profile was not used.
 
-All 15 browser checks passed: extension/configuration loading, unsafe-import
-rejection, optional permission grant, hosted bridge, directional navigation,
-protected text input, actual fixture-video seeking, captions, player fullscreen,
-pause-on-switch, repeated-launch deduplication, closed-tab recovery, bridge
-isolation, permission revocation, and offline Home activation.
+All 15 original browser checks passed: extension/configuration loading,
+unsafe-import rejection, optional permission grant, hosted bridge, directional
+navigation, protected text input, actual fixture-video seeking, captions, player
+fullscreen, pause-on-switch, repeated-launch deduplication, closed-tab recovery,
+bridge isolation, permission revocation, and offline Home activation.
 
-The 20 unit tests cover configuration/protocol boundaries, input handling, spatial
-geometry, tab coordination, and seekable media ranges. Build, TypeScript, ESLint,
+Current working copy rerun: 2026-10-16, Fedora 44 and Firefox 156.0, using a
+separate headless profile over SSH. All 16 browser checks passed, including the
+new guided-setup and favorite pin/reorder behavior. The 22 local unit tests also
+pass. This still does not verify a physical remote or provider account flows.
+
+The 20 unit tests at the time covered configuration/protocol boundaries, input
+handling, spatial geometry, tab coordination, and seekable media ranges. Build, TypeScript, ESLint,
 and extension lint pass. Extension lint reports two React renderer `innerHTML`
 warnings; project code does not use raw HTML rendering or runtime code generation.
 
 These results do not validate DRM, GPU decoding, HDMI audio, or the physical remote.
+
+The current working copy adds 2 unit tests for older configuration migration and
+diagnostic-data privacy. `pnpm check` and the remote Firefox fixture suite pass.
+The fixture suite uses Firefox headless and does not exercise the physical remote.
 
 ## Provider acceptance
 

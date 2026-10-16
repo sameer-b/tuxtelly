@@ -77,6 +77,7 @@ export const serviceSchema = z
       .regex(/^#[0-9a-fA-F]{6}$/)
       .default("#5be5bc"),
     enabled: z.boolean().default(true),
+    favorite: z.boolean().default(false),
     backgroundAudio: z.boolean().default(false),
   })
   .strict()
@@ -101,6 +102,7 @@ export const configSchema = z
         overscan: z.number().int().min(0).max(8).default(3),
         wrap: z.boolean().default(true),
         fullscreenWindow: z.boolean().default(false),
+        openHomeAtStartup: z.boolean().default(false),
       })
       .strict(),
     bindings: z.array(bindingSchema).max(40),
@@ -264,7 +266,26 @@ export type State = {
   openServices: string[];
   version: string;
   recovery?: string;
+  lastUsedServiceId?: string;
 };
+export function createDiagnosticReport(
+  config: Config,
+  data: Pick<State, "grantedOrigins" | "version">,
+  userAgent: string,
+  generatedAt = new Date().toISOString(),
+) {
+  return {
+    app: "TuxTelly",
+    version: data.version,
+    generatedAt,
+    browser: userAgent,
+    configuredServices: config.services.length,
+    enabledServices: config.services.filter((service) => service.enabled)
+      .length,
+    grantedSiteOrigins: data.grantedOrigins.length,
+    note: "No service URLs, account data, cookies, viewing history, or typed input are included.",
+  };
+}
 export type Reply = { ok: true; data?: unknown } | { ok: false; error: string };
 export type Client = {
   kind: "hosted" | "extension";

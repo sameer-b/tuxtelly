@@ -12,11 +12,13 @@ logins and DRM stay in ordinary Firefox tabs on the TV laptop.
 **Initial development preview.** The approved plan is being implemented in one
 private monorepo. Public release and persistent extension signing remain pending.
 
-The preview includes a customizable launcher, service settings, keyboard mapping
-and calibration, managed tabs, an in-page switcher, generic spatial navigation,
-HTML video controls, optional site permissions, and a bundled Home screen.
+The preview includes pinned and ordered services, a last-used resume action,
+guided service setup, keyboard mapping and calibration, managed tabs, an in-page
+switcher, generic spatial navigation, HTML video controls, optional site
+permissions, local config backup, privacy-limited diagnostics, and a bundled
+Home screen.
 
-Local checks pass 20 unit tests; 15 Firefox integration checks pass on the
+Local checks pass 22 unit tests; 16 Firefox integration checks passed on the
 reference Fedora 44 laptop with Firefox 156. These establish fixture behavior,
 not full compatibility with streaming providers. A separate live YouTube probe
 passes 9 checks covering public playback, search, controls, and tab switching.
@@ -42,8 +44,9 @@ streaming sites you want TuxTelly to control, then sign in on each provider's pa
 
 For your Fedora TV laptop, use the [preview setup instructions](docs/installation.md).
 Temporary add-ons disappear when Firefox restarts. Persistent installation needs
-a Mozilla-signed extension; the preview package is unsigned. A signed install opens
-Home when Firefox starts, so no launcher URL or server startup is needed.
+a Mozilla-signed extension; the preview package is unsigned. Enable **Open
+TuxTelly Home when this Firefox profile starts** in the dedicated TV profile to
+open Home at startup; no launcher URL or server startup is needed.
 
 A static launcher that can be served from another machine remains optional for
 multi-TV setups. PVE, Caddy, a database, and a Node server are not needed for local
@@ -78,6 +81,11 @@ depend on the website and require permission plus a compatible adapter.
 - Rii MX3 2.4 GHz air mouse and keyboard remote, pending physical calibration.
 - One local Firefox profile; optional static hosting only for multiple TVs.
 - Provider implementation and testing order: YouTube, Netflix, Disney+, HBO Max.
+
+Home can be opened with the `Home` remote key or Firefox's `Alt+Shift+H` extension
+shortcut; `F8` opens the in-page service switcher. Settings explain site access,
+provider sign-in, button remapping, and safe diagnostic export. System volume is
+controlled by KDE; player volume affects the active HTML video only.
 
 ## Repository layout
 

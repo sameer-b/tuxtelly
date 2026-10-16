@@ -176,6 +176,89 @@ h3 {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 20px;
 }
+.setup-guide {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr auto;
+  align-items: center;
+  gap: 28px;
+  margin: 4px 0 38px;
+  padding: 22px 26px;
+  border: 1px solid #344a3b;
+  border-radius: 16px;
+  background: linear-gradient(110deg, #1b2b21, #17201b);
+}
+.setup-guide h2 {
+  margin: 0 0 8px;
+}
+.setup-guide p:not(.eyebrow) {
+  margin: 0;
+  color: #a6b4aa;
+  font-size: 0.8em;
+  line-height: 1.5;
+}
+.setup-guide .eyebrow {
+  margin-bottom: 8px;
+}
+.setup-guide ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+  color: #c1cec4;
+  font-size: 0.76em;
+}
+.step-done {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  border-radius: 50%;
+  color: #111a14;
+  background: #91eeb9;
+  font-weight: 750;
+}
+.setup-actions {
+  flex-direction: column;
+  align-items: stretch;
+}
+.service-entry {
+  position: relative;
+  min-width: 0;
+}
+.service-entry .service-card {
+  width: 100%;
+}
+.favorite-toggle {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  z-index: 1;
+  padding: 5px 10px;
+  border: 0;
+  background: #101716aa;
+  color: #ffd36e;
+  font-size: 1.2em;
+}
+.favorite-toggle:hover {
+  background: #101716;
+}
+.access-tag {
+  font-size: 0.6em;
+  letter-spacing: 0.1em;
+  color: #91eeb9;
+}
+.home-shortcuts {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: #91a196;
+  font-size: 0.75em;
+}
+.home-shortcuts kbd {
+  color: #d8e5dc;
+}
 .service-card {
   height: 225px;
   padding: 22px;
@@ -477,6 +560,12 @@ input[type="checkbox"] {
   }
 }
 @media (max-width: 900px) {
+  .setup-guide {
+    grid-template-columns: 1fr;
+  }
+  .setup-actions {
+    flex-direction: row;
+  }
   .topbar {
     gap: 15px;
   }

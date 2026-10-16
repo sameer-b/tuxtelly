@@ -21,6 +21,7 @@
     "lint:extension": "web-ext lint --source-dir apps/extension/.output/firefox-mv3",
     "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm build && pnpm lint:extension",
     "package": "node scripts/package.mjs",
+    "sign:extension": "node scripts/sign-extension.mjs",
     "test:youtube": "node tests/firefox/youtube.mjs"
   },
   "devDependencies": {

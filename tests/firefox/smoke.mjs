@@ -123,7 +123,26 @@ try {
   const initial = await message({ type: "state" });
   assert.equal(initial.ok, true);
   check("extension loads and returns validated configuration");
-  const config = initial.data.config;
+  assert.equal(
+    await driver
+      .findElements(By.css(".setup-guide li"))
+      .then((items) => items.length),
+    3,
+  );
+  await driver.findElement(By.css('[aria-label="Pin Disney+"]')).click();
+  await driver.wait(async () => {
+    const state = await message({ type: "state" });
+    return state.data.config.services.find((service) => service.id === "disney")
+      .favorite;
+  }, 5000);
+  assert.equal(
+    await driver.executeScript(
+      'return document.querySelector(".service-entry [data-service]").dataset.service',
+    ),
+    "disney",
+  );
+  check("guided setup appears and pinned services move to the top");
+  const config = (await message({ type: "state" })).data.config;
   config.launcherUrl = origin + "/";
   config.services = ["one", "two"].map((id) => ({
     id,
