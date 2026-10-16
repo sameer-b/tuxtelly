@@ -90,7 +90,8 @@ shortcut; `F8` opens the in-page service switcher. Settings explain site access,
 provider sign-in, button remapping, and safe diagnostic export. System volume is
 controlled by KDE; player volume affects the active HTML video only.
 Home & display settings include solid colors, gradients, soft blurred palettes,
-and locally bundled 4K photo wallpapers. See the
+and locally bundled 4K photo wallpapers. The cozy VHS living-room theme is the
+default, with Windows 95 and midnight themes available. See the
 [wallpaper credits](packages/ui/src/assets/wallpapers/README.md).
 
 ## Repository layout

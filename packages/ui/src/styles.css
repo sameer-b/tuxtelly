@@ -728,3 +728,325 @@ input[type="checkbox"] {
     scroll-behavior: auto !important;
   }
 }
+
+.theme-picker {
+  min-width: 0;
+  margin: 24px 0;
+  padding: 18px;
+  border: 1px solid #35443b;
+  border-radius: 14px;
+}
+.theme-picker legend {
+  padding: 0 8px;
+  font-weight: 700;
+}
+.theme-picker > .hint {
+  margin-top: 0;
+}
+.theme-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.theme-choice {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 9px;
+  padding: 9px;
+  text-align: left;
+  background: #111916cc;
+  border: 1px solid #435148;
+}
+.theme-choice.selected {
+  border-color: #91eeb9;
+  box-shadow: 0 0 0 1px #91eeb9;
+}
+.theme-swatch {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 6;
+  border-radius: 5px;
+}
+.theme-choice strong {
+  font-size: 0.9em;
+}
+.theme-choice small {
+  color: #aab8ae;
+  font-size: 0.72em;
+  line-height: 1.45;
+}
+@media (max-width: 700px) {
+  .theme-options {
+    grid-template-columns: 1fr;
+  }
+}
+.app[data-theme="retro-vhs"] {
+  color: #f0e4c9;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+}
+.app[data-theme="retro-vhs"]::after {
+  content: "";
+  position: fixed;
+  z-index: 30;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at center, transparent 52%, #0807054a 100%),
+    repeating-linear-gradient(to bottom, transparent 0 3px, #05050538 3px 4px);
+}
+.app[data-theme="retro-vhs"] .topbar {
+  padding: 0 20px;
+  border-bottom-color: #78613f;
+  background: linear-gradient(180deg, #211d19e8, #171816e8);
+  box-shadow: 0 5px 24px #0004;
+}
+.app[data-theme="retro-vhs"] .wordmark {
+  color: #f2cd7e;
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: 0;
+  text-shadow: 0 0 18px #e1a64355;
+}
+.app[data-theme="retro-vhs"] .wordmark svg {
+  color: #e1aa54;
+}
+.app[data-theme="retro-vhs"] .eyebrow {
+  color: #d7ad63;
+  font-family: "Courier New", monospace;
+  letter-spacing: 0.18em;
+}
+.app[data-theme="retro-vhs"] h1,
+.app[data-theme="retro-vhs"] h2,
+.app[data-theme="retro-vhs"] h3 {
+  font-family: Georgia, "Times New Roman", serif;
+}
+.app[data-theme="retro-vhs"] h1 {
+  text-shadow: 0 3px 28px #e1a64324;
+}
+.app[data-theme="retro-vhs"] h1 span {
+  color: #e2bd75;
+}
+.app[data-theme="retro-vhs"] .subtitle,
+.app[data-theme="retro-vhs"] .panel p,
+.app[data-theme="retro-vhs"] .setup-guide p:not(.eyebrow) {
+  color: #c5b99c;
+}
+.app[data-theme="retro-vhs"] .nav {
+  color: #c6b99e;
+}
+.app[data-theme="retro-vhs"] .nav.active {
+  color: #ffe3a1;
+  background: #59452c;
+}
+.app[data-theme="retro-vhs"] .setup-guide,
+.app[data-theme="retro-vhs"] .living-room {
+  border-color: #755f3d;
+  background: linear-gradient(120deg, #211e19e8, #17221ee8);
+  border-radius: 9px;
+  box-shadow:
+    inset 0 1px #f5d18c20,
+    0 12px 34px #0003;
+}
+.app[data-theme="retro-vhs"] .service-card {
+  position: relative;
+  border: 2px solid #806b48;
+  border-radius: 8px;
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--service-color) 20%, #241f1b),
+    #191b19 78%
+  );
+  box-shadow:
+    inset 0 1px #f3dca32e,
+    inset 0 -4px #07090855,
+    0 8px 0 #11110f,
+    0 17px 28px #0005;
+}
+.app[data-theme="retro-vhs"] .service-card::after {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border: 1px solid #e3c78c20;
+  border-radius: 4px;
+  pointer-events: none;
+}
+.app[data-theme="retro-vhs"] .service-card:hover,
+.app[data-theme="retro-vhs"] .service-card:focus-visible {
+  transform: translateY(-3px);
+  border-color: #f1cb73;
+  box-shadow:
+    inset 0 1px #f3dca34a,
+    0 0 20px #dfad4b28,
+    0 8px 0 #11110f,
+    0 20px 32px #0007;
+}
+.app[data-theme="retro-vhs"] .service-symbol {
+  text-shadow: 0 0 22px
+    color-mix(in srgb, var(--service-color) 38%, transparent);
+}
+.app[data-theme="retro-vhs"] .service-number,
+.app[data-theme="retro-vhs"] .card-bottom > span:last-child,
+.app[data-theme="retro-vhs"] .quiet {
+  color: #b3a17e;
+}
+.app[data-theme="retro-vhs"] .open-tag,
+.app[data-theme="retro-vhs"] .access-tag {
+  color: #f0ca78;
+}
+.app[data-theme="retro-vhs"] .pill {
+  color: #f0dba8;
+  background: #51432c;
+}
+.app[data-theme="retro-vhs"] button {
+  border-color: #756345;
+  border-radius: 5px;
+  background: linear-gradient(#38342b, #282820);
+  color: #f1e3c4;
+}
+.app[data-theme="retro-vhs"] button:hover {
+  background: linear-gradient(#51452f, #31291f);
+}
+.app[data-theme="retro-vhs"] .primary {
+  color: #241b10;
+  background: linear-gradient(#f2d38f, #c3944a);
+  border-color: #edcf8e;
+}
+.app[data-theme="retro-vhs"] .primary:hover {
+  background: linear-gradient(#ffe3a6, #d9ad63);
+}
+.app[data-theme="retro-vhs"] kbd {
+  color: #f0dba8;
+  border-color: #756345;
+  background: #27241e;
+  border-radius: 3px;
+}
+.app[data-theme="retro-vhs"] .panel {
+  border-color: #64543a;
+  border-radius: 9px;
+  background: #1b1d19ef;
+  box-shadow: 0 12px 35px #0003;
+}
+.app[data-theme="retro-vhs"] input,
+.app[data-theme="retro-vhs"] textarea,
+.app[data-theme="retro-vhs"] select {
+  color: #f2e6cb;
+  border-color: #66553a;
+  border-radius: 4px;
+  background: #111512;
+}
+.app[data-theme="windows-95"] {
+  color: #111;
+  font-family: Tahoma, "MS Sans Serif", Arial, sans-serif;
+}
+.app[data-theme="windows-95"]::after {
+  display: none;
+}
+.app[data-theme="windows-95"] .topbar {
+  min-height: 72px;
+  margin-top: 20px;
+  padding: 8px;
+  color: #fff;
+  background: linear-gradient(90deg, #000080, #1084d0);
+  border: 2px outset #dfdfdf;
+}
+.app[data-theme="windows-95"] .wordmark,
+.app[data-theme="windows-95"] .connection {
+  color: #fff;
+}
+.app[data-theme="windows-95"] .wordmark svg {
+  color: #fff;
+}
+.app[data-theme="windows-95"] .nav,
+.app[data-theme="windows-95"] .nav.active {
+  color: #111;
+  border: 2px outset #dfdfdf;
+  border-radius: 0;
+  background: #c0c0c0;
+}
+.app[data-theme="windows-95"] h1,
+.app[data-theme="windows-95"] h2,
+.app[data-theme="windows-95"] h3,
+.app[data-theme="windows-95"] .eyebrow,
+.app[data-theme="windows-95"] .subtitle,
+.app[data-theme="windows-95"] .panel p,
+.app[data-theme="windows-95"] .hint,
+.app[data-theme="windows-95"] label,
+.app[data-theme="windows-95"] .quiet,
+.app[data-theme="windows-95"] .section-label > span {
+  color: #111;
+}
+.app[data-theme="windows-95"] h1 span {
+  color: #000080;
+}
+.app[data-theme="windows-95"] .eyebrow {
+  font-weight: 700;
+}
+.app[data-theme="windows-95"] .panel,
+.app[data-theme="windows-95"] .setup-guide,
+.app[data-theme="windows-95"] .living-room,
+.app[data-theme="windows-95"] .theme-picker,
+.app[data-theme="windows-95"] .wallpaper-picker {
+  color: #111;
+  border: 2px outset #fff;
+  border-radius: 0;
+  background: #c0c0c0;
+  box-shadow: 2px 2px 0 #404040;
+}
+.app[data-theme="windows-95"] .theme-choice,
+.app[data-theme="windows-95"] .wallpaper-choice {
+  color: #111;
+  border: 2px outset #fff;
+  border-radius: 0;
+  background: #c0c0c0;
+  box-shadow: 1px 1px 0 #404040;
+}
+.app[data-theme="windows-95"] .theme-choice small {
+  color: #333;
+}
+.app[data-theme="windows-95"] .theme-choice.selected,
+.app[data-theme="windows-95"] .wallpaper-choice.selected {
+  outline: 2px dotted #000080;
+  outline-offset: -5px;
+  box-shadow: 1px 1px 0 #404040;
+}
+.app[data-theme="windows-95"] .service-card {
+  color: #111;
+  border: 3px outset #e8e8e8;
+  border-radius: 0;
+  background: linear-gradient(145deg, #d9d9d9, #b8b8b8);
+  box-shadow: 2px 3px 0 #404040;
+}
+.app[data-theme="windows-95"] .service-card:hover,
+.app[data-theme="windows-95"] .service-card:focus-visible {
+  border-color: #fff;
+  background: #d4d4d4;
+  transform: none;
+}
+.app[data-theme="windows-95"] .service-number,
+.app[data-theme="windows-95"] .card-bottom > span:last-child,
+.app[data-theme="windows-95"] .open-tag,
+.app[data-theme="windows-95"] .access-tag,
+.app[data-theme="windows-95"] .living-room p,
+.app[data-theme="windows-95"] .pill {
+  color: #222;
+}
+.app[data-theme="windows-95"] button,
+.app[data-theme="windows-95"] .primary,
+.app[data-theme="windows-95"] input,
+.app[data-theme="windows-95"] textarea,
+.app[data-theme="windows-95"] select,
+.app[data-theme="windows-95"] kbd {
+  color: #111;
+  border: 2px outset #fff;
+  border-radius: 0;
+  background: #c0c0c0;
+  box-shadow: 1px 1px 0 #404040;
+}
+.app[data-theme="windows-95"] button:hover,
+.app[data-theme="windows-95"] .primary:hover {
+  background: #d4d4d4;
+}
+.app[data-theme="windows-95"] .pill {
+  background: #aaa;
+}

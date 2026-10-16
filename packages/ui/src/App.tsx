@@ -23,6 +23,7 @@ import {
 } from "@tuxtelly/core";
 import "./styles.css";
 import { wallpaperGroups, wallpaperPresets } from "./wallpapers";
+import { themes } from "./themes";
 
 function Logo() {
   return (
@@ -224,9 +225,11 @@ export function App({ client }: { client: Client }) {
     wallpaperPresets.find(
       (preset) => preset.id === config.preferences.wallpaper,
     ) ?? wallpaperPresets[0];
+  const isRetroTheme = config.preferences.theme === "retro-vhs";
   return (
     <div
       className="app"
+      data-theme={config.preferences.theme}
       style={
         {
           "--scale": config.preferences.scale,
@@ -288,14 +291,20 @@ export function App({ client }: { client: Client }) {
       {view === "library" && (
         <main>
           <div className="intro">
-            <p className="eyebrow">THE BEST SEAT IN THE HOUSE</p>
+            <p className="eyebrow">
+              {isRetroTheme
+                ? "TUXTELLY HOME VIDEO · CHANNEL 01"
+                : "THE BEST SEAT IN THE HOUSE"}
+            </p>
             <h1>
-              Your TV.
+              {isRetroTheme ? "Tonight’s" : "Your TV."}
               <br />
-              <span>Your rules.</span>
+              <span>{isRetroTheme ? "feature." : "Your rules."}</span>
             </h1>
             <p className="subtitle">
-              Your shows. One remote. Make yourself at home.
+              {isRetroTheme
+                ? "Pick a case, settle in, and enjoy the show."
+                : "Your shows. One remote. Make yourself at home."}
             </p>
           </div>
           {showSetupGuide && (
@@ -349,8 +358,11 @@ export function App({ client }: { client: Client }) {
             </section>
           )}
           <div className="section-label">
-            <h2>Your services</h2>
-            <span>{visibleServices.length} in your collection</span>
+            <h2>{isRetroTheme ? "On the shelf" : "Your services"}</h2>
+            <span>
+              {visibleServices.length}{" "}
+              {isRetroTheme ? "titles" : "in your collection"}
+            </span>
           </div>
           <div className="services">
             {visibleServices.map((service, index) => (
@@ -394,7 +406,8 @@ export function App({ client }: { client: Client }) {
                   <div className="card-bottom">
                     <span>{service.name}</span>
                     <span>
-                      Open <span aria-hidden="true">↗</span>
+                      {isRetroTheme ? "Play title" : "Open"}{" "}
+                      <span aria-hidden="true">{isRetroTheme ? "▶" : "↗"}</span>
                     </span>
                   </div>
                 </button>
@@ -424,7 +437,11 @@ export function App({ client }: { client: Client }) {
             </span>
             <div>
               <h3>A little more living room.</h3>
-              <p>Powered by Linux. Ready for the sofa.</p>
+              <p>
+                {isRetroTheme
+                  ? "Your home video shelf, always ready for another night in."
+                  : "Powered by Linux. Ready for the sofa."}
+              </p>
             </div>
             <span className="pill">OPEN SOURCE</span>
           </div>
@@ -499,6 +516,44 @@ export function App({ client }: { client: Client }) {
                 />
               </label>
             </div>
+            <fieldset className="theme-picker">
+              <legend>Look & feel</legend>
+              <p className="hint">
+                Themes restyle the home screen and controls. Your selection
+                previews immediately and saves with your settings.
+              </p>
+              <div className="theme-options">
+                {themes.map((theme) => (
+                  <button
+                    type="button"
+                    className={
+                      config.preferences.theme === theme.id
+                        ? "theme-choice selected"
+                        : "theme-choice"
+                    }
+                    aria-pressed={config.preferences.theme === theme.id}
+                    key={theme.id}
+                    onClick={() =>
+                      setConfig({
+                        ...config,
+                        preferences: {
+                          ...config.preferences,
+                          theme: theme.id,
+                        },
+                      })
+                    }
+                  >
+                    <span
+                      className="theme-swatch"
+                      style={{ background: theme.swatch }}
+                      aria-hidden="true"
+                    />
+                    <strong>{theme.name}</strong>
+                    <small>{theme.description}</small>
+                  </button>
+                ))}
+              </div>
+            </fieldset>
             <fieldset className="wallpaper-picker">
               <legend>Home screen wallpaper</legend>
               <p className="hint">

@@ -25,12 +25,25 @@ describe("configuration boundaries", () => {
     delete (oldConfig.preferences as { openHomeAtStartup?: boolean })
       .openHomeAtStartup;
     delete (oldConfig.preferences as { wallpaper?: string }).wallpaper;
+    delete (oldConfig.preferences as { theme?: string }).theme;
     const migrated = parseConfig(JSON.stringify(oldConfig));
     expect(migrated.services.every((service) => !("favorite" in service))).toBe(
       true,
     );
     expect(migrated.preferences.openHomeAtStartup).toBe(false);
-    expect(migrated.preferences.wallpaper).toBe("gradient-aurora");
+    expect(migrated.preferences.wallpaper).toBe("gradient-ember");
+    expect(migrated.preferences.theme).toBe("retro-vhs");
+  });
+  it("offers a cozy retro default and recognized alternate themes", () => {
+    expect(defaultConfig.preferences.theme).toBe("retro-vhs");
+    for (const theme of ["windows-95", "midnight"] as const) {
+      const config = structuredClone(defaultConfig);
+      config.preferences.theme = theme;
+      expect(configSchema.parse(config).preferences.theme).toBe(theme);
+    }
+    const config = structuredClone(defaultConfig);
+    (config.preferences as { theme: string }).theme = "unknown";
+    expect(configSchema.safeParse(config).success).toBe(false);
   });
   it("keeps service URLs and activity out of diagnostic reports", () => {
     const report = createDiagnosticReport(

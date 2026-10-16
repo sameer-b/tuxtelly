@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const VERSION = "0.2.4";
+export const VERSION = "0.2.5";
 export const PROTOCOL = 1;
 export function webUrl(value: string): URL {
   const url = new URL(value);
@@ -123,7 +123,10 @@ export const configSchema = z
             "image-mist",
             "image-forest",
           ])
-          .default("gradient-aurora"),
+          .default("gradient-ember"),
+        theme: z
+          .enum(["retro-vhs", "windows-95", "midnight"])
+          .default("retro-vhs"),
       })
       .strict(),
     bindings: z.array(bindingSchema).max(40),
