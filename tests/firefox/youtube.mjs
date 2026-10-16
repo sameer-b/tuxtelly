@@ -67,22 +67,18 @@ try {
     10000,
   );
   const homeHandle = await driver.getWindowHandle();
-  await driver.executeScript(
-    `const b=document.createElement('button');b.id='test-grant';b.textContent='Grant YouTube';b.onclick=()=>browser.permissions.request({origins:['https://www.youtube.com/*','https://youtube.com/*']}).then(x=>b.dataset.ok=String(x));document.body.append(b)`,
-  );
-  await driver.findElement(By.id("test-grant")).click();
-  await driver.wait(
-    async () =>
-      (await driver
-        .findElement(By.id("test-grant"))
-        .getAttribute("data-ok")) === "true",
-    10000,
+  assert.equal(
+    await driver.executeAsyncScript(
+      "const done=arguments[0];browser.permissions.contains({origins:['https://www.youtube.com/*']}).then(done)",
+    ),
+    false,
   );
   await driver.findElement(By.css('[data-service="youtube"]')).click();
   await driver.wait(
     async () => (await driver.getAllWindowHandles()).length === 2,
     10000,
   );
+  check("first YouTube launch requests permission and opens the service");
   const serviceHandle = (await driver.getAllWindowHandles()).find(
     (h) => h !== homeHandle,
   );

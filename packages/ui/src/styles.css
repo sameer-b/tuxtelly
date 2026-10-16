@@ -323,6 +323,12 @@ h3 {
   letter-spacing: 0.1em;
   color: #91eeb9;
 }
+.access-needed {
+  color: #f4c378;
+  font-size: 0.58em;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
 .home-shortcuts {
   display: flex;
   gap: 10px;
@@ -954,6 +960,9 @@ input[type="checkbox"] {
 .app[data-theme="retro-vhs"] .open-tag,
 .app[data-theme="retro-vhs"] .access-tag {
   color: #40eeff;
+}
+.app[data-theme="retro-vhs"] .access-needed {
+  color: #ff9bda;
 }
 .app[data-theme="retro-vhs"] .pill {
   color: #ffb8f0;

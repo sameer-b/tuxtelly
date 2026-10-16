@@ -217,6 +217,32 @@ export function App({ client }: { client: Client }) {
       granted.has(originPattern(origin)),
     );
   }
+  async function launchService(service: Service) {
+    if (!connected) {
+      settings();
+      return;
+    }
+    if (!hasServiceAccess(service) && client.grant) {
+      try {
+        const granted = await client.grant(
+          service.origins.map(originPattern),
+        );
+        if (!granted) {
+          setMessage(
+            `Allow TuxTelly to access ${service.name} so keyboard navigation and player controls can work.`,
+          );
+          return;
+        }
+        await refresh();
+      } catch {
+        setMessage(
+          `Could not request access for ${service.name}. Open Settings and grant site access.`,
+        );
+        return;
+      }
+    }
+    await request({ type: "open", serviceId: service.id });
+  }
   const visibleServices = config.services.filter((service) => service.enabled);
   const lastUsed = config.services.find(
     (service) => service.id === state?.lastUsedServiceId && service.enabled,
@@ -347,9 +373,7 @@ export function App({ client }: { client: Client }) {
                 {lastUsed && (
                   <button
                     className="primary"
-                    onClick={() =>
-                      void request({ type: "open", serviceId: lastUsed.id })
-                    }
+                    onClick={() => void launchService(lastUsed)}
                   >
                     Resume {lastUsed.name}
                   </button>
@@ -376,9 +400,7 @@ export function App({ client }: { client: Client }) {
                     sessionStorage.setItem("tuxtelly.selection", service.id)
                   }
                   onClick={() =>
-                    connected
-                      ? void request({ type: "open", serviceId: service.id })
-                      : settings()
+                    void launchService(service)
                   }
                 >
                   <div className="card-top">
@@ -390,6 +412,9 @@ export function App({ client }: { client: Client }) {
                     )}
                     {hasServiceAccess(service) && (
                       <span className="access-tag">READY</span>
+                    )}
+                    {state && !hasServiceAccess(service) && (
+                      <span className="access-needed">ALLOW ACCESS</span>
                     )}
                   </div>
                   <div className={`service-symbol ${service.adapter}`}>
