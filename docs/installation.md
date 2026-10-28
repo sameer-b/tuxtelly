@@ -117,14 +117,14 @@ Each distributor needs a Mozilla developer account and signing credentials. Only
 install an XPI returned by Mozilla. Provider site permissions remain a per-user
 choice.
 
-Push a stable `vX.Y.Z` tag after setting that version consistently in
-`package.json`, `apps/extension/package.json`, and `packages/core/src/index.ts`.
-GitHub Actions runs the full checks, submits the extension for Mozilla signing,
-then publishes the signed XPI and update manifest as a GitHub Release. The XPI
-bootstrap release is version 0.2.19; Firefox installations on older versions
-must install that signed version once before automatic updates can work. Firefox
-checks for updates periodically. In **about:addons**, use the gear menu and
-**Check for Updates** to check immediately.
+Every push to `main` automatically creates the next stable patch version and
+starts the release workflow. A merged PR and a direct push to `main` both trigger
+this process. GitHub Actions runs the full checks, submits the extension for
+Mozilla signing, then publishes the signed XPI and update manifest as a GitHub
+Release. The first bootstrap release is version 0.2.19; Firefox installations on
+older versions must install that signed version once before automatic updates
+can work. Firefox checks for updates periodically. In **about:addons**, use the
+gear menu and **Check for Updates** to check immediately.
 
 ## Fedora app package
 

@@ -3,10 +3,16 @@ on:
   push:
     tags:
       - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Stable version tag to release (for example v0.2.19)
+        required: true
+        type: string
 permissions:
   contents: read
 concurrency:
-  group: firefox-release-${{ github.ref }}
+  group: firefox-release-${{ inputs.tag || github.ref }}
   cancel-in-progress: false
 jobs:
   check:
@@ -14,6 +20,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag && format('refs/tags/{0}', inputs.tag) || github.ref }}
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -37,6 +45,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ inputs.tag && format('refs/tags/{0}', inputs.tag) || github.ref }}
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -44,8 +53,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Verify tag and version
         env:
-          RELEASE_TAG: ${{ github.ref_name }}
-          RELEASE_SHA: ${{ github.sha }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           node --input-type=module <<'NODE'
           import { readFile } from "node:fs/promises";
@@ -63,7 +71,9 @@ jobs:
           if ([root, extension, core].some((item) => item !== version)) {
             throw new Error(`Tag ${tag} must match root (${root}), extension (${extension}), and core (${core}) versions.`);
           }
-          execFileSync("git", ["merge-base", "--is-ancestor", process.env.RELEASE_SHA, "origin/main"]);
+          const taggedCommit = execFileSync("git", ["rev-parse", `${tag}^{commit}`], { encoding: "utf8" }).trim();
+          execFileSync("git", ["fetch", "origin", "main"]);
+          execFileSync("git", ["merge-base", "--is-ancestor", taggedCommit, "origin/main"]);
           NODE
       - name: Build Firefox extension
         run: pnpm --filter @tuxtelly/extension build
@@ -74,16 +84,16 @@ jobs:
           WEB_EXT_API_SECRET: ${{ secrets.WEB_EXT_API_SECRET }}
       - name: Prepare signed XPI and update manifest
         env:
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: node scripts/prepare-firefox-release.mjs
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
+          gh release create "$RELEASE_TAG" \
             artifacts/release/*.xpi \
             artifacts/release/updates.json \
             artifacts/release/SHA256SUMS \
             --verify-tag \
-            --title "TuxTelly $GITHUB_REF_NAME" \
+            --title "TuxTelly $RELEASE_TAG" \
             --generate-notes

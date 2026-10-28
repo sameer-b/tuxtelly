@@ -37,9 +37,11 @@ the maintainer. See [GitHub’s configuration guide](https://docs.github.com/en/
 
 - Use a new version consistently in the root package, extension package, and
   `packages/core/src/index.ts`.
-- Push a stable `vX.Y.Z` tag that points to a commit on `main`. GitHub Actions
-  checks the tag, runs the full test suite, and submits the XPI for Mozilla
-  unlisted signing before it creates a GitHub Release.
+- Each push to `main` automatically creates a stable patch version tag. GitHub
+  Actions checks the tagged commit, runs the full test suite, and submits the XPI
+  for Mozilla unlisted signing before it creates a GitHub Release. Several rapid
+  pushes may be included in one release if an earlier release tag already
+  contains those commits.
 - The release contains the Mozilla-signed XPI, `updates.json`, and its SHA-256
   checksum. The permanent Firefox update URL points to
   `releases/latest/download/updates.json`; preserve that release asset name.
@@ -63,5 +65,4 @@ the maintainer. See [GitHub’s configuration guide](https://docs.github.com/en/
 The update feed is configured in the Firefox manifest and served from the latest
 GitHub Release. Updating installations requires one signed bootstrap XPI built
 with that update URL; installations of older versions need that version installed
-manually once. Publishing source commits alone does not trigger releases; push a
-stable version tag to start the release workflow.
+manually once. Every push to `main` starts the version tagging and release process.
