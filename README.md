@@ -10,8 +10,10 @@ logins and DRM stay in ordinary Firefox tabs on the TV laptop.
 ## Project status
 
 **Development preview.** The Firefox extension, signing tools, and experimental
-Fedora packaging are implemented. Source builds are unsigned until submitted to
-Mozilla. There is no automatic update feed or published stable release yet.
+Fedora packaging are implemented. The tag release workflow builds, tests, and
+submits signed XPI updates to Mozilla, then publishes the signed extension and
+update manifest to GitHub Releases. The first automatic update requires a signed
+bootstrap installation; see the [release instructions](docs/publication.md).
 
 The preview includes recent-use service ordering, a last-used resume action,
 guided service setup, keyboard mapping and calibration, managed tabs, an in-page
