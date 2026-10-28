@@ -24,8 +24,9 @@ extension loading, the bundled and hosted About pages, a configured seek shortcu
 fullscreen sizing, site permissions, and tab lifecycle. An opt-in live probe on
 Firefox 159 / macOS passed 10 signed-out YouTube checks. Neither result qualifies
 the separate Fedora TV installation or signed-in provider accounts. Firefox lint
-reports two warnings for bundled React renderer `innerHTML`; project code does not
-use raw HTML rendering or runtime code generation.
+passes with zero warnings after the packaged React DOM renderer was patched to
+reject `dangerouslySetInnerHTML`, which TuxTelly does not use. Project code also
+forbids raw HTML rendering and runtime code generation.
 
 Fixture tests do not validate DRM, GPU decoding, HDMI audio, physical remote
 behavior, or provider account flows.
