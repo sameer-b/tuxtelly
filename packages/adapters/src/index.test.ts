@@ -1,6 +1,87 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { defaultConfig } from "@tuxtelly/core";
-import { installControls, seek } from "./index";
+import { installControls, playerAction, seek } from "./index";
+describe("YouTube fullscreen", () => {
+  const service = { ...defaultConfig.services[0], adapter: "youtube" as const };
+  afterEach(() => {
+    document.body.replaceChildren();
+    vi.restoreAllMocks();
+  });
+  function fixture() {
+    const wrapper = document.createElement("div");
+    const video = document.createElement("video");
+    video.style.width = "560px";
+    const button = document.createElement("button");
+    button.className = "ytp-fullscreen-button";
+    button.setAttribute("aria-label", "Fullscreen");
+    button.textContent = "Fullscreen";
+    wrapper.append(video, button);
+    document.body.append(wrapper);
+    vi.spyOn(video, "getBoundingClientRect").mockReturnValue({
+      width: 560,
+      height: 315,
+    } as DOMRect);
+    const enter = vi.fn().mockResolvedValue(undefined);
+    video.requestFullscreen = enter;
+    const click = vi.spyOn(button, "click");
+    return { video, button, enter, click };
+  }
+  it("uses the provider's available fullscreen control", async () => {
+    const { button, enter, click } = fixture();
+    vi.spyOn(button, "getBoundingClientRect").mockReturnValue({
+      width: 40,
+      height: 40,
+    } as DOMRect);
+    expect(await playerAction("fullscreen", service, defaultConfig)).toEqual({
+      ok: true,
+    });
+    expect(click).toHaveBeenCalledOnce();
+    expect(enter).not.toHaveBeenCalled();
+  });
+  it.each(["missing", "hidden", "disabled"])(
+    "fullscreens the video when the provider control is %s",
+    async (state) => {
+      const { button, enter, click } = fixture();
+      if (state === "missing") button.remove();
+      if (state === "disabled") {
+        button.disabled = true;
+        vi.spyOn(button, "getBoundingClientRect").mockReturnValue({
+          width: 40,
+          height: 40,
+        } as DOMRect);
+      }
+      expect(await playerAction("fullscreen", service, defaultConfig)).toEqual({
+        ok: true,
+      });
+      expect(enter).toHaveBeenCalledOnce();
+      expect(click).not.toHaveBeenCalled();
+    },
+  );
+  it("exits native fullscreen even if a provider control appears later", async () => {
+    const { video, button, click } = fixture();
+    vi.spyOn(button, "getBoundingClientRect").mockReturnValue({
+      width: 40,
+      height: 40,
+    } as DOMRect);
+    const exit = vi.fn().mockResolvedValue(undefined);
+    // jsdom does not implement the Fullscreen API.
+    Object.defineProperty(document, "fullscreenElement", {
+      configurable: true,
+      get: () => video,
+    });
+    document.exitFullscreen = exit;
+    try {
+      expect(await playerAction("fullscreen", service, defaultConfig)).toEqual({
+        ok: true,
+      });
+      expect(exit).toHaveBeenCalledOnce();
+      expect(click).not.toHaveBeenCalled();
+    } finally {
+      Reflect.deleteProperty(document, "fullscreenElement");
+      Reflect.deleteProperty(document, "exitFullscreen");
+    }
+  });
+});
 describe("provider arrow keys", () => {
   it("leaves arrow keys untouched on service pages", () => {
     const button = document.createElement("button");

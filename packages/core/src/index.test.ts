@@ -101,22 +101,16 @@ describe("configuration boundaries", () => {
       id: "custom-example",
       adapter: "generic" as const,
     };
-    expect(defaultSearchServiceIds([...defaultConfig.services, customGeneric])).not.toContain(
-      "custom-example",
-    );
     expect(
-      migrateSearchServiceIds(
-        ["netflix"],
-        defaultConfig.services,
-        ["peacock"],
-      ),
+      defaultSearchServiceIds([...defaultConfig.services, customGeneric]),
+    ).not.toContain("custom-example");
+    expect(
+      migrateSearchServiceIds(["netflix"], defaultConfig.services, ["peacock"]),
     ).toEqual(["netflix", "peacock"]);
     expect(
-      migrateSearchServiceIds(
-        ["netflix", "peacock"],
-        defaultConfig.services,
-        ["peacock"],
-      ),
+      migrateSearchServiceIds(["netflix", "peacock"], defaultConfig.services, [
+        "peacock",
+      ]),
     ).toEqual(["netflix", "peacock"]);
   });
   it("keeps service URLs and activity out of diagnostic reports", () => {

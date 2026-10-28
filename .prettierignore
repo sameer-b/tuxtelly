@@ -4,3 +4,5 @@ pnpm-lock.yaml
 **/dist
 artifacts
 node_modules
+# Preserve third-party artwork byte-for-byte.
+packages/ui/src/assets/credits/tmdb.svg

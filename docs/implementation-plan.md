@@ -15,23 +15,24 @@ scope; the initial preview does not satisfy all exit criteria.
 - Phase 2: local Home settings, origin permissions, managed tabs, duplicate prevention,
   closed-tab recovery, and bundled local Home implemented and fixture-tested. No runtime
   server is required for one TV. Persistent installation/restart acceptance remains pending.
-- Phase 3: generic navigation, remote calibration, configurable keys, switcher,
-  pause/mute policy, and HTML video controls implemented. Nine live YouTube public-video
-  checks pass, including a regression fix for focused player wrappers. Full YouTube qualification,
+- Phase 3: Home navigation, remote calibration, configurable keys, switcher,
+  pause/mute policy, and HTML video controls implemented. The live YouTube probe
+  covers signed-out playback, controls, fullscreen sizing, and tab reuse. Full YouTube qualification,
   virtualized catalogs, and additional focus restoration remain.
 - Phases 4–5: initial provider selector hooks exist for YouTube, Netflix, Disney+,
   HBO Max, and Prime Video. Prime Video keyboard-compatible controls are implemented;
   provider acceptance for all of these requires account-based testing.
 - Phase 6: Fedora diagnostics, local preview script, packaging, and installation
-  documentation exist. Extension signing, performance/soak tests, and release
-  qualification remain pending; Caddy/LXC is optional for later multi-TV sharing.
+  documentation exist. Signed development builds have been produced; automated
+  distribution, performance/soak tests, and release qualification remain pending.
+  Caddy/LXC is optional for later multi-TV sharing.
 - Follow-up Home improvements: recent-use ordering, last-used resume,
   visible access status, onboarding guidance, action-labeled key mapping, and a
   privacy-limited diagnostic export are implemented. AMO signing and Fedora policy
-  install/removal scripts are prepared; credentials and TV-side acceptance remain.
+  install/removal scripts are implemented; TV-side acceptance remains.
 
-Controlled tests: 22 local unit tests and 19 Firefox integration checks passed
-on the reference Fedora laptop. See [acceptance](acceptance.md) for detailed boundaries.
+See [acceptance](acceptance.md) for dated test results and their platform and
+provider boundaries. Test counts are recorded there rather than duplicated here.
 
 ## Phase 0: Prove browser and remote assumptions
 
@@ -95,6 +96,8 @@ integration. Do not silently reduce the agreed scope.
 
 ## Phase 6: Packaging, deployment, and release qualification
 
+- Package the Firefox extension as an installable Linux app while keeping video in the host Firefox.
+- Fedora first slice: launcher, persistent profile, KDE app entry/autostart, and RPM-managed Firefox extension policy are implemented; the RPM still needs a Fedora build/install/upgrade test.
 - Complete signed local installation and reversible Fedora/KDE setup documentation.
 - Keep Caddy/LXC hosting optional for multi-TV sharing.
 - Build release artifacts, checksums, source packages, and upgrade/rollback instructions.
@@ -115,7 +118,7 @@ visibility remains private.
    handling, settings validation/migrations, tab reconciliation, and adapter regressions.
 2. Actual Firefox extension integration: permissions, messaging, tabs, focus,
    fullscreen transitions, and recovery using Selenium/WebDriver.
-3. Manual hardware/provider acceptance: real accounts, DRM, Rii remote, KDE audio,
+3. Manual hardware/provider acceptance: real accounts, DRM, remote keys, KDE audio,
    HDMI, suspend/resume, and the complete viewing loop.
 
 Controlled fixtures do not prove provider compatibility or DRM playback.

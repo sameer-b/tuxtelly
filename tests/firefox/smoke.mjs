@@ -13,6 +13,7 @@ const mime = {
   ".html": "text/html",
   ".js": "text/javascript",
   ".css": "text/css",
+  ".svg": "image/svg+xml",
   ".webm": "video/webm",
   ".vtt": "text/vtt",
   ".json": "application/json",
@@ -86,6 +87,33 @@ const check = (label) => {
   results.push(label);
   console.log(`PASS ${label}`);
 };
+async function verifyCredits(label) {
+  await driver.findElement(By.css('[data-view="about"]')).click();
+  await driver.wait(until.elementLocated(By.id("about-title")), 5000);
+  assert.ok(
+    (await driver.findElement(By.css("main")).getText()).includes(
+      "This product uses the TMDB API but is not endorsed or certified by TMDB.",
+    ),
+  );
+  await driver.wait(
+    () =>
+      driver.executeScript(`
+      const logo = document.querySelector('img[alt="TMDB"]');
+      return logo?.complete && logo.naturalWidth > 0 &&
+        (new URL(logo.src).origin === location.origin || logo.src.startsWith('data:image/'));
+    `),
+    5000,
+    "TMDB logo must load from the bundled app",
+  );
+  if (label === "bundled")
+    await writeFile(
+      join(root, "artifacts/about.png"),
+      await driver.takeScreenshot(),
+      "base64",
+    );
+  await driver.findElement(By.css(".wordmark")).click();
+  check(`${label} About & credits includes TMDB attribution and a local logo`);
+}
 try {
   const builder = new Builder()
     .forBrowser("firefox")
@@ -117,9 +145,28 @@ try {
   const homeHandle = await driver.getWindowHandle();
   const message = async (payload) =>
     driver.executeAsyncScript(
-      "const done=arguments[arguments.length-1]; browser.runtime.sendMessage(arguments[0]).then(done,e=>done({ok:false,error:String(e)}));",
+      `const payload=arguments[0],done=arguments[arguments.length-1];
+       if (typeof browser !== 'undefined' && browser.runtime?.sendMessage) {
+         browser.runtime.sendMessage(payload).then(done,e=>done({ok:false,error:String(e)}));
+       } else {
+         const id=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
+         const reply=e=>{if(e.source!==window||e.origin!==location.origin||e.data?.channel!=='tuxtelly:reply'||e.data?.protocol!==1||e.data?.id!==id)return;clearTimeout(timer);removeEventListener('message',reply);done(e.data.reply);};
+         addEventListener('message',reply);
+         const timer=setTimeout(()=>{removeEventListener('message',reply);done({ok:false,error:'Launcher bridge timed out'})},5000);
+         postMessage({channel:'tuxtelly:request',protocol:1,id,message:payload},location.origin);
+       }`,
       payload,
     );
+  const launcherMessage = async (payload) => {
+    const activeHandle = await driver.getWindowHandle();
+    if (activeHandle !== homeHandle) await driver.switchTo().window(homeHandle);
+    try {
+      return await message(payload);
+    } finally {
+      if (activeHandle !== homeHandle)
+        await driver.switchTo().window(activeHandle);
+    }
+  };
   const initial = await message({ type: "state" });
   assert.equal(initial.ok, true);
   check("extension loads and returns validated configuration");
@@ -133,7 +180,16 @@ try {
     initial.data.config.services.some((service) => service.id === "prime"),
   );
   check("guided setup and built-in Prime Video service appear");
+  await verifyCredits("bundled");
   const config = (await message({ type: "state" })).data.config;
+  config.bindings.push({
+    key: "]",
+    action: "seekForward",
+    alt: false,
+    ctrl: false,
+    meta: false,
+    shift: false,
+  });
   config.launcherUrl = origin + "/";
   config.services = ["one", "two"].map((id) => ({
     id,
@@ -169,6 +225,7 @@ try {
     10000,
   );
   check("trusted hosted launcher connects to extension");
+  await verifyCredits("hosted");
   await mkdir(join(root, "artifacts"), { recursive: true });
   await writeFile(
     join(root, "artifacts/launcher.png"),
@@ -191,7 +248,9 @@ try {
   );
   await driver.actions().sendKeys(Key.ARROW_RIGHT).perform();
   assert.equal(
-    await driver.executeScript("return document.activeElement === document.body"),
+    await driver.executeScript(
+      "return document.activeElement === document.body",
+    ),
     true,
   );
   check("service arrows pass through without TuxTelly changing focus");
@@ -213,13 +272,31 @@ try {
       ),
     10000,
   );
-  await driver.actions().sendKeys(Key.ARROW_RIGHT).perform();
-  assert.ok(
-    (await driver.executeScript(
-      'return document.querySelector("video").currentTime',
-    )) >= 9,
+  // Arrow keys belong to the provider. Exercise the configured seek shortcut
+  // while paused so elapsed playback cannot make this assertion pass.
+  await driver.actions().sendKeys("k").perform();
+  await driver.wait(
+    () => driver.executeScript('return document.querySelector("video").paused'),
+    5000,
   );
-  check("seek action controls actual video");
+  const beforeSeek = await driver.executeScript(
+    'return document.querySelector("video").currentTime',
+  );
+  await driver.actions().sendKeys("]").perform();
+  await driver.wait(
+    async () =>
+      Math.abs(
+        (await driver.executeScript(
+          'return document.querySelector("video").currentTime',
+        )) -
+          beforeSeek -
+          config.preferences.seekSeconds,
+      ) < 0.25,
+    5000,
+    "Configured seek shortcut must advance the paused video by the configured interval",
+  );
+  check("configured seek shortcut controls actual video");
+  await driver.actions().sendKeys("k").perform();
   await driver.actions().sendKeys("c").perform();
   assert.equal(
     await driver.executeScript(
@@ -234,13 +311,34 @@ try {
       driver.executeScript("return document.fullscreenElement !== null"),
     5000,
   );
+  await driver.wait(
+    async () =>
+      driver.executeScript(`
+        const video = document.querySelector('video');
+        const rect = video.getBoundingClientRect();
+        return document.fullscreenElement === video &&
+          Math.abs(rect.x) <= 1 && Math.abs(rect.y) <= 1 &&
+          Math.abs(rect.width - innerWidth) <= 1 &&
+          Math.abs(rect.height - innerHeight) <= 1;
+      `),
+    5000,
+    "Fallback fullscreen must expand the video to fill the viewport",
+  );
   await driver.actions().sendKeys("f").perform();
   await driver.wait(
     async () =>
       driver.executeScript("return document.fullscreenElement === null"),
     5000,
   );
-  check("player fullscreen enters and exits from keyboard input");
+  assert.equal(
+    await driver.executeScript(
+      'return document.querySelector("video").getBoundingClientRect().width',
+    ),
+    560,
+  );
+  check(
+    "fallback fullscreen fills the viewport and restores the video size on exit",
+  );
   await driver.actions().sendKeys(Key.F8).perform();
   await driver.wait(
     until.elementLocated(By.css('[data-tuxtelly="switcher"]')),
@@ -265,7 +363,7 @@ try {
   await driver.switchTo().window(twoHandle);
   await driver.wait(until.elementLocated(By.id("card-one")), 10000);
   assert.equal(
-    (await message({ type: "state" })).data.config.services[0].id,
+    (await launcherMessage({ type: "state" })).data.config.services[0].id,
     "two",
   );
   check("most recently opened service moves to the first Home position");
@@ -386,7 +484,10 @@ try {
     5000,
   );
   const status = await message({ type: "state" });
-  assert.equal(status.data.config.services[0].id, "one");
+  assert.deepEqual(
+    status.data.config.services.map((service) => service.id).sort(),
+    ["one", "two"],
+  );
   await new Promise((resolve) => server.close(resolve));
   // Start on a service so a pre-existing Home tab cannot make this pass by itself.
   await message({ type: "open", serviceId: "one" });
@@ -412,12 +513,16 @@ try {
   );
 } catch (error) {
   if (driver) {
-    await mkdir(join(root, "artifacts"), { recursive: true });
-    await writeFile(
-      join(root, "artifacts/firefox-failure.png"),
-      await driver.takeScreenshot(),
-      "base64",
-    );
+    try {
+      await mkdir(join(root, "artifacts"), { recursive: true });
+      await writeFile(
+        join(root, "artifacts/firefox-failure.png"),
+        await driver.takeScreenshot(),
+        "base64",
+      );
+    } catch {
+      // A closed browser cannot provide a screenshot; preserve the test failure.
+    }
   }
   throw error;
 } finally {

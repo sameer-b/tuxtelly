@@ -14,9 +14,8 @@ Firefox tabs, retaining their normal authentication and DRM behavior.
 
 Reference setup:
 
-- Fedora 44, KDE Wayland, Firefox 156 at `/usr/bin/firefox` (inspected on the laptop).
-- Intel Core i5-1135G7, x86-64, 8 GB RAM.
-- Rii MX3 2.4 GHz air mouse/keyboard remote, identified from the supplied listing.
+- Fedora 44, KDE Wayland, and native Firefox on an x86-64 reference test laptop.
+- A USB air mouse/keyboard remote; individual devices require key calibration.
 - Local Firefox extension; optional Proxmox VE static hosting only if one shared launcher is later useful across TVs.
 - Provider priority: YouTube, Netflix, Disney+, HBO Max.
 
@@ -326,6 +325,6 @@ integration, multiple isolated accounts per provider, and runtime adapter market
 - [WXT browser targeting](https://wxt.dev/guide/essentials/target-different-browsers.html)
 - [Caddy static hosting](https://caddyserver.com/docs/quick-starts/static-files)
 - [WirePlumber controls](https://pipewire.pages.freedesktop.org/wireplumber/man/wpctl.html)
-- [Rii MX3 listing](https://www.amazon.com/dp/B01CL3ZXGO)
+- The reference remote was identified from its retail listing; actual key delivery must be tested on the target machine.
 
 Provider requirements and site behavior change; recheck them in Phase 0.

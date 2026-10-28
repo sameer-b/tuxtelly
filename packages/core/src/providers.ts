@@ -41,12 +41,7 @@ const providerAliases: Record<string, string[]> = {
     "hulu ad free",
     "hulu premium",
   ],
-  peacock: [
-    "peacock",
-    "peacock tv",
-    "peacock premium",
-    "peacock premium plus",
-  ],
+  peacock: ["peacock", "peacock tv", "peacock premium", "peacock premium plus"],
 };
 
 /**

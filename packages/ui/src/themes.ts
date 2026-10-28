@@ -10,7 +10,8 @@ export const themes: {
   {
     id: "retro-vhs",
     name: "VHS living room",
-    description: "A cozy VHS shelf lit by neon pink, violet, and cyan CRT glow.",
+    description:
+      "A cozy VHS shelf lit by neon pink, violet, and cyan CRT glow.",
     swatch:
       "linear-gradient(135deg, #171022 0 34%, #ff4fd8 35% 43%, #8f4dff 44% 60%, #40eeff 61% 68%, #0b0916 69%)",
   },

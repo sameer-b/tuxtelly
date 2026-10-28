@@ -666,6 +666,12 @@ kbd {
   color: #9bb8a6;
   font-size: 0.75em;
 }
+.tmdb-logo {
+  display: block;
+  width: 100px;
+  height: auto;
+  margin: 16px 0;
+}
 .hint {
   font-size: 0.8em;
   color: #91a797;

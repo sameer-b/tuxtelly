@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=TuxTelly
+GenericName=Streaming TV launcher
+Comment=Your streaming services, one Linux TV remote
+Exec=/usr/bin/tuxtelly
+Icon=applications-multimedia
+Terminal=false
+Categories=AudioVideo;Video;Player;
+StartupNotify=false
+Keywords=TV;streaming;Firefox;

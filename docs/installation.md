@@ -10,8 +10,8 @@ Use Node.js 24 LTS and pnpm 12.11.2. Install dependencies and build:
 
 ```sh
 pnpm install --frozen-lockfile
+pnpm format:check
 pnpm check
-pnpm build
 pnpm package
 ```
 
@@ -22,23 +22,24 @@ is part of the extension, so normal single-TV use needs no local or remote serve
 
 ## Fedora TV preview
 
-The preview files have already been staged on the reference laptop. In a KDE
-terminal, run:
+After building from source on the Fedora machine, stage the extension in a
+dedicated preview directory. Run these commands from the repository in a KDE
+terminal:
 
 ```sh
-bash ~/.local/share/tuxtelly-preview/0.1.0/preview.sh
+preview_dir="${XDG_DATA_HOME:-$HOME/.local/share}/tuxtelly-preview/source"
+mkdir -p "$preview_dir/extension"
+cp -R apps/extension/.output/firefox-mv3/. "$preview_dir/extension/"
+bash integrations/fedora/preview.sh "$preview_dir"
 ```
 
-In Firefox's debugging tab, choose **Load Temporary Add-on** and select:
-
-```text
-/home/sam/.local/share/tuxtelly-preview/0.1.0/extension/manifest.json
-```
+The script prints the full path to `extension/manifest.json`. In Firefox’s
+debugging tab, choose **Load Temporary Add-on** and select that file.
 
 Open TuxTelly from Firefox's Extensions menu to reach its bundled Home screen.
 In Settings, grant access to the streaming sites you want TuxTelly to control.
 Return to Home, launch a service, and sign in directly on the provider's page.
-Use **Remote** to see the keys sent by the Rii remote and adjust bindings.
+Use **Remote** to see the keys sent by your remote and adjust bindings.
 In **Settings → Home & display**, choose the cozy VHS living-room theme,
 Windows 95, or Midnight Modern. The same page offers solid colors, gradients,
 soft blur, and bundled 4K photo wallpapers. Choices preview immediately and are
@@ -68,7 +69,7 @@ typed input. Review the file before sharing it.
 
 A normal Firefox installation requires a Mozilla-signed extension. The package
 created by `pnpm package` is explicitly unsigned and intended for development.
-After a persistent signed build is available, run
+Once you have a signed build from the signing procedure below, run
 `integrations/fedora/setup-tv-profile.sh` from KDE. It creates a named Firefox
 profile and installs a KDE autostart entry without changing the regular profile.
 The script leaves an existing autostart file untouched. Start the new profile
@@ -105,8 +106,46 @@ To remove it, run `integrations/fedora/remove-signed-extension.sh`. Restart Fire
 after install or removal. Site permissions remain separately controlled by the
 user in TuxTelly settings.
 
-The signing credentials are not stored in the repository. Mozilla account setup,
-first-time signing review, and provider site permissions still require the owner.
+Signing credentials belong to the maintainer’s local environment and are not
+included in the repository or build artifacts. Each distributor needs a Mozilla
+developer account and signing credentials. Review can take time; only install the
+signed XPI returned by Mozilla. Provider site permissions remain a per-user choice.
+There is no automatic update feed yet; install a newer signed XPI to update.
+
+## Fedora app package
+
+The initial desktop package wraps the same Firefox extension; it does not embed
+a browser engine or run a server. Build it on Fedora with `rpm-build` installed
+and a Mozilla-signed XPI available:
+
+```sh
+sudo dnf install rpm-build
+scripts/build-rpm.sh artifacts/signed/tuxtelly.xpi
+sudo dnf install artifacts/tuxtelly-*.rpm
+```
+
+The RPM installs `/usr/bin/tuxtelly`, a KDE application-menu entry, the signed
+XPI, and a Firefox enterprise policy that installs TuxTelly as a normal,
+user-removable extension. The policy helper preserves other policy entries and
+restores any prior TuxTelly policy if the RPM is removed. The launcher reuses
+`~/.local/share/tuxtelly/firefox-profile`, so provider logins
+and extension settings survive app and browser restarts. If it finds the
+earlier preview profile at `~/.local/share/tuxtelly-preview/profile` and no new
+profile yet, it adopts that profile automatically. It requires the distribution's
+native Firefox package; playback remains in Firefox.
+
+Run `tuxtelly` from the app menu or terminal. Use `tuxtelly --enable-autostart`
+to add a per-user KDE login entry, `tuxtelly --disable-autostart` to remove it,
+and `tuxtelly --profile-path` to print the profile path. The first time, open
+TuxTelly settings and enable **Open TuxTelly Home when this Firefox profile
+starts**. The launcher opens a standard Firefox window; use your existing KDE
+or Firefox fullscreen setup, or pass `tuxtelly --kiosk` to request Firefox
+kiosk mode. Removing the RPM removes its Firefox policy entry and package files
+but deliberately leaves the profile and credentials intact.
+
+This first package targets Fedora. The launcher and extension remain portable;
+Debian/Ubuntu packaging can be added separately once the Fedora install and
+upgrade flow has been exercised on the TV laptop.
 
 Use KDE to choose the HDMI audio sink and control system volume. TuxTelly's
 player volume controls are separate. Remove the autostart file to undo startup

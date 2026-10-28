@@ -131,13 +131,28 @@ try {
       driver.executeScript("return document.fullscreenElement !== null"),
     5000,
   );
+  await driver.wait(
+    async () =>
+      driver.executeScript(`
+        const video = document.querySelector('video');
+        const rect = video.getBoundingClientRect();
+        // Allow letterboxing, but require the picture to fit the viewport
+        // along at least one axis and to remain centered on both axes.
+        return Math.abs(rect.x + rect.width / 2 - innerWidth / 2) <= 2 &&
+          Math.abs(rect.y + rect.height / 2 - innerHeight / 2) <= 2 &&
+          (Math.abs(rect.width - innerWidth) <= 2 ||
+            Math.abs(rect.height - innerHeight) <= 2);
+      `),
+    5000,
+    "YouTube fullscreen video must fill and stay centered in the viewport",
+  );
   await driver.actions().sendKeys("f").perform();
   await driver.wait(
     async () =>
       driver.executeScript("return document.fullscreenElement === null"),
     5000,
   );
-  check("YouTube player fullscreen enters and exits");
+  check("YouTube fullscreen fills the viewport, stays centered, and exits");
   const captions = await driver.findElements(
     By.css(
       '.ytp-subtitles-button:not([disabled]):not([aria-disabled="true"]):not([aria-label*="unavailable" i])',
