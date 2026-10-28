@@ -1,0 +1,89 @@
+name: Publish Firefox extension
+on:
+  push:
+    tags:
+      - "v*.*.*"
+permissions:
+  contents: read
+concurrency:
+  group: firefox-release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install --global pnpm@12.11.2
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm check
+      - uses: browser-actions/setup-firefox@v1
+        id: firefox
+      - run: pnpm test:firefox
+        env:
+          FIREFOX_BINARY: ${{ steps.firefox.outputs.firefox-path }}
+
+  release:
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install --global pnpm@12.11.2
+      - run: pnpm install --frozen-lockfile
+      - name: Verify tag and version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFile } from "node:fs/promises";
+          import { execFileSync } from "node:child_process";
+
+          const tag = process.env.RELEASE_TAG;
+          if (!/^v\d+\.\d+\.\d+$/.test(tag)) {
+            throw new Error(`Release tag must be a stable vX.Y.Z version: ${tag}`);
+          }
+          const version = tag.slice(1);
+          const root = JSON.parse(await readFile("package.json", "utf8")).version;
+          const extension = JSON.parse(await readFile("apps/extension/package.json", "utf8")).version;
+          const core = (await readFile("packages/core/src/index.ts", "utf8"))
+            .match(/export const VERSION = "([^"]+)"/)?.[1];
+          if ([root, extension, core].some((item) => item !== version)) {
+            throw new Error(`Tag ${tag} must match root (${root}), extension (${extension}), and core (${core}) versions.`);
+          }
+          execFileSync("git", ["merge-base", "--is-ancestor", process.env.RELEASE_SHA, "origin/main"]);
+          NODE
+      - name: Build Firefox extension
+        run: pnpm --filter @tuxtelly/extension build
+      - name: Sign with Mozilla
+        run: pnpm exec web-ext sign --channel=unlisted --source-dir=apps/extension/.output/firefox-mv3 --artifacts-dir=artifacts/signed
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.WEB_EXT_API_KEY }}
+          WEB_EXT_API_SECRET: ${{ secrets.WEB_EXT_API_SECRET }}
+      - name: Prepare signed XPI and update manifest
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: node scripts/prepare-firefox-release.mjs
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            artifacts/release/*.xpi \
+            artifacts/release/updates.json \
+            artifacts/release/SHA256SUMS \
+            --verify-tag \
+            --title "TuxTelly $GITHUB_REF_NAME" \
+            --generate-notes

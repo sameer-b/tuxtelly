@@ -179,6 +179,14 @@ try {
   assert.ok(
     initial.data.config.services.some((service) => service.id === "prime"),
   );
+  const extensionManifest = await driver.executeScript(
+    "return browser.runtime.getManifest()",
+  );
+  assert.equal(
+    extensionManifest.browser_specific_settings.gecko.update_url,
+    "https://github.com/sameer-b/tuxtelly/releases/latest/download/updates.json",
+  );
+  check("Firefox extension points at its automatic update manifest");
   check("guided setup and built-in Prime Video service appear");
   await verifyCredits("bundled");
   const config = (await message({ type: "state" })).data.config;

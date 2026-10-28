@@ -11,6 +11,8 @@ export default defineConfig({
       gecko: {
         id: "tuxtelly@sameer-b.github.io",
         strict_min_version: "142.0",
+        update_url:
+          "https://github.com/sameer-b/tuxtelly/releases/latest/download/updates.json",
         data_collection_permissions: { required: ["none"] },
       },
     },

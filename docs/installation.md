@@ -97,6 +97,11 @@ pnpm sign:extension
 chat. The signing command passes credentials to `web-ext` through environment
 variables rather than command-line arguments.
 
+The GitHub release workflow uses repository Actions secrets named
+`WEB_EXT_API_KEY` and `WEB_EXT_API_SECRET`. It receives them only in the signing
+step. Maintainers can add or rotate them with `gh secret set`; never print them,
+place them in build artifacts, or put them in release notes.
+
 The signed XPI is written to `artifacts/signed/`. Copy it to the Fedora laptop and
 run `integrations/fedora/install-signed-extension.sh /path/to/tuxtelly.xpi`.
 That script uses Firefox's enterprise extension policy and `sudo`; it installs a
@@ -106,11 +111,20 @@ To remove it, run `integrations/fedora/remove-signed-extension.sh`. Restart Fire
 after install or removal. Site permissions remain separately controlled by the
 user in TuxTelly settings.
 
-Signing credentials belong to the maintainer’s local environment and are not
-included in the repository or build artifacts. Each distributor needs a Mozilla
-developer account and signing credentials. Review can take time; only install the
-signed XPI returned by Mozilla. Provider site permissions remain a per-user choice.
-There is no automatic update feed yet; install a newer signed XPI to update.
+Signing credentials belong in the maintainer’s local environment and GitHub
+Actions secrets; they are not included in the repository or build artifacts.
+Each distributor needs a Mozilla developer account and signing credentials. Only
+install an XPI returned by Mozilla. Provider site permissions remain a per-user
+choice.
+
+Push a stable `vX.Y.Z` tag after setting that version consistently in
+`package.json`, `apps/extension/package.json`, and `packages/core/src/index.ts`.
+GitHub Actions runs the full checks, submits the extension for Mozilla signing,
+then publishes the signed XPI and update manifest as a GitHub Release. The XPI
+bootstrap release is version 0.2.19; Firefox installations on older versions
+must install that signed version once before automatic updates can work. Firefox
+checks for updates periodically. In **about:addons**, use the gear menu and
+**Check for Updates** to check immediately.
 
 ## Fedora app package
 
