@@ -89,6 +89,7 @@ jobs:
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           gh release create "$RELEASE_TAG" \
             artifacts/release/*.xpi \
