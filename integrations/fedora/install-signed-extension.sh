@@ -24,16 +24,25 @@ if [[ -f "$policy_file" && ! -f "$backup_file" ]]; then
 fi
 
 python3 - "$policy_file" "$extension_id" "$install_xpi" <<'PY'
-import json, pathlib, sys
+import json, pathlib, re, subprocess, sys
 policy_path, extension_id, xpi_path = sys.argv[1:]
 path = pathlib.Path(policy_path)
 document = json.loads(path.read_text()) if path.exists() else {"policies": {}}
 policies = document.setdefault("policies", {})
 settings = policies.setdefault("ExtensionSettings", {})
-settings[extension_id] = {
-    "installation_mode": "normal_installed",
-    "install_url": pathlib.Path(xpi_path).as_uri(),
-}
+version = subprocess.run(
+    ["firefox", "--version"], capture_output=True, text=True, check=False
+).stdout
+match = re.search(r"Firefox\s+(\d+)", version)
+major = int(match.group(1)) if match else 0
+extension = {"installation_mode": "normal_installed"}
+if major >= 151:
+    extension["update_url"] = (
+        "https://github.com/sameer-b/tuxtelly/releases/latest/download/updates.json"
+    )
+if major < 158:
+    extension["install_url"] = pathlib.Path(xpi_path).as_uri()
+settings[extension_id] = extension
 temporary = path.with_suffix(".json.tmp")
 temporary.write_text(json.dumps(document, indent=2) + "\n")
 temporary.chmod(0o644)

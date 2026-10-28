@@ -107,6 +107,9 @@ run `integrations/fedora/install-signed-extension.sh /path/to/tuxtelly.xpi`.
 That script uses Firefox's enterprise extension policy and `sudo`; it installs a
 Mozilla-signed XPI and does not disable signature checks. The policy is system
 wide and installs TuxTelly as a normal, user-removable add-on in Firefox profiles.
+On Firefox 158 and later, it installs from the GitHub update manifest and receives
+future signed releases automatically. Older Firefox versions use the local XPI as
+the policy install source.
 To remove it, run `integrations/fedora/remove-signed-extension.sh`. Restart Firefox
 after install or removal. Site permissions remain separately controlled by the
 user in TuxTelly settings.
