@@ -5,7 +5,7 @@ export {
   resolveProviderIds,
 } from "./providers";
 
-export const VERSION = "0.2.19";
+export const VERSION = "0.2.20";
 export const PROTOCOL = 1;
 export function webUrl(value: string): URL {
   const url = new URL(value);
