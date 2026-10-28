@@ -10,9 +10,10 @@ logins and DRM stay in ordinary Firefox tabs on the TV laptop.
 ## Project status
 
 **Development preview.** The Firefox extension, signing tools, and experimental
-Fedora packaging are implemented. The tag release workflow builds, tests, and
-submits signed XPI updates to Mozilla, then publishes the signed extension and
-update manifest to GitHub Releases. The first automatic update requires a signed
+Fedora packaging are implemented. Every push to `main` automatically advances
+the patch version when needed, tags the release, runs the release checks, submits
+the XPI to Mozilla for signing, then publishes the signed extension and update
+manifest to GitHub Releases. The first automatic update requires a signed
 bootstrap installation; see the [release instructions](docs/publication.md).
 
 The preview includes recent-use service ordering, a last-used resume action,
