@@ -37,6 +37,31 @@ describe("search remote navigation", () => {
     expect(event.defaultPrevented).toBe(true);
   });
 
+  it("moves up from the query to the Search tab in the top navigation", () => {
+    const nav = document.createElement("button");
+    nav.dataset.searchNav = "true";
+    const container = document.createElement("main");
+    const query = document.createElement("input");
+    query.type = "search";
+    const filter = document.createElement("input");
+    filter.type = "checkbox";
+    container.append(query, filter);
+    document.body.append(nav, container);
+    setRect(nav, rect(300, 10));
+    setRect(query, rect(10, 80, 400));
+    setRect(filter, rect(10, 150, 25, 25));
+    query.focus();
+    const event = new KeyboardEvent("keydown", {
+      key: "ArrowUp",
+      bubbles: true,
+      cancelable: true,
+    });
+
+    expect(navigateSearch(container, event)).toBe(true);
+    expect(document.activeElement).toBe(nav);
+    expect(event.defaultPrevented).toBe(true);
+  });
+
   it("leaves left and right arrows available for editing the query", () => {
     const container = document.createElement("main");
     const query = document.createElement("input");

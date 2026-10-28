@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+# Launch TuxTelly in one durable Firefox profile. The extension opens Home when
+# its per-profile startup option is enabled.
+set -euo pipefail
+
+app_name="TuxTelly"
+data_home="${XDG_DATA_HOME:-$HOME/.local/share}"
+profile_dir="${TUXTELLY_PROFILE_DIR:-$data_home/tuxtelly/firefox-profile}"
+legacy_profile_dir="$data_home/tuxtelly-preview/profile"
+if [[ -z "${TUXTELLY_PROFILE_DIR:-}" && ! -d "$profile_dir" && -d "$legacy_profile_dir" ]]; then
+  # Adopt the profile created by the earlier preview setup so saved sessions
+  # and TuxTelly preferences remain available after installing this package.
+  profile_dir="$legacy_profile_dir"
+fi
+autostart_dir="${XDG_CONFIG_HOME:-$HOME/.config}/autostart"
+autostart_file="$autostart_dir/tuxtelly.desktop"
+
+usage() {
+  cat <<'EOF'
+Usage: tuxtelly [--kiosk] [--enable-autostart | --disable-autostart]
+       tuxtelly --profile-path | --help
+
+Launches Firefox with the persistent TuxTelly profile. Logins and settings stay
+in that profile. Enable “Open TuxTelly Home when this Firefox profile starts”
+once in TuxTelly settings to open the Home screen automatically.
+EOF
+}
+
+kiosk=0
+while (($#)); do
+  case "$1" in
+    --kiosk) kiosk=1 ;;
+    --enable-autostart)
+      mkdir -p "$autostart_dir"
+      cat >"$autostart_file" <<EOF
+[Desktop Entry]
+Type=Application
+Name=$app_name
+Comment=Your streaming services, one Linux TV remote
+Exec=/usr/bin/tuxtelly
+Terminal=false
+X-KDE-autostart-after=panel
+EOF
+      chmod 0644 "$autostart_file"
+      echo "Enabled TuxTelly autostart: $autostart_file"
+      exit 0
+      ;;
+    --disable-autostart)
+      rm -f "$autostart_file"
+      echo "Disabled TuxTelly autostart. The Firefox profile was kept."
+      exit 0
+      ;;
+    --profile-path) printf '%s\n' "$profile_dir"; exit 0 ;;
+    --help|-h) usage; exit 0 ;;
+    *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
+  esac
+  shift
+done
+
+firefox_bin="${TUXTELLY_FIREFOX_BIN:-}"
+if [[ -z "$firefox_bin" ]]; then
+  for candidate in firefox firefox-esr; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+      firefox_bin="$(command -v "$candidate")"
+      break
+    fi
+  done
+fi
+if [[ -z "$firefox_bin" || ! -x "$firefox_bin" ]]; then
+  echo "Firefox was not found. Install the native Firefox package, then retry." >&2
+  exit 1
+fi
+
+mkdir -p "$profile_dir"
+args=(--no-remote --profile "$profile_dir")
+if ((kiosk)); then args+=(--kiosk); fi
+exec "$firefox_bin" "${args[@]}"

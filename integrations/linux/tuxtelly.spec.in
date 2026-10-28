@@ -1,0 +1,49 @@
+Name:           tuxtelly
+Version:        @VERSION@
+Release:        1%{?dist}
+Summary:        Linux TV frontend built around Firefox
+License:        MIT
+URL:            https://github.com/sameer-b/tuxtelly
+BuildArch:      noarch
+Requires:       firefox
+Requires:       python3
+Source0:        tuxtelly.xpi
+Source1:        tuxtelly
+Source2:        policy.py
+Source3:        tuxtelly.desktop
+Source4:        LICENSE
+
+%description
+TuxTelly launches Firefox with a persistent profile for its signed extension.
+Streaming websites remain in ordinary Firefox tabs for native browser playback
+and DRM support.
+
+%prep
+
+%build
+
+%install
+install -D -m 0755 %{SOURCE1} %{buildroot}%{_bindir}/tuxtelly
+install -D -m 0755 %{SOURCE2} %{buildroot}%{_libexecdir}/tuxtelly/policy.py
+install -D -m 0644 %{SOURCE0} %{buildroot}%{_datadir}/tuxtelly/tuxtelly.xpi
+install -D -m 0644 %{SOURCE3} %{buildroot}%{_datadir}/applications/tuxtelly.desktop
+install -D -m 0644 %{SOURCE4} %{buildroot}%{_licensedir}/tuxtelly/LICENSE
+
+%posttrans
+python3 %{_libexecdir}/tuxtelly/policy.py install /etc/firefox/policies/policies.json %{_datadir}/tuxtelly/tuxtelly.xpi %{_sharedstatedir}/tuxtelly/firefox-policy-backup.json
+
+%preun
+if [ "$1" -eq 0 ]; then
+  python3 %{_libexecdir}/tuxtelly/policy.py remove /etc/firefox/policies/policies.json %{_datadir}/tuxtelly/tuxtelly.xpi %{_sharedstatedir}/tuxtelly/firefox-policy-backup.json
+fi
+
+%files
+%{_bindir}/tuxtelly
+%{_libexecdir}/tuxtelly/policy.py
+%{_datadir}/tuxtelly/tuxtelly.xpi
+%{_datadir}/applications/tuxtelly.desktop
+%license %{_licensedir}/tuxtelly/LICENSE
+
+%changelog
+* Sat Oct 17 2026 TuxTelly contributors - @VERSION@-1
+- Initial Fedora desktop package

@@ -79,9 +79,13 @@ export async function playerAction(
   service: Service,
   config: Config,
 ): Promise<Result> {
-  const video = activeVideo();
-  if (!video) return { ok: false, message: "No active video found." };
   try {
+    if (action === "fullscreen" && document.fullscreenElement) {
+      await document.exitFullscreen();
+      return { ok: true };
+    }
+    const video = activeVideo();
+    if (!video) return { ok: false, message: "No active video found." };
     if (action === "playPause") {
       if (video.paused) await video.play();
       else video.pause();
@@ -115,8 +119,9 @@ export async function playerAction(
       );
       if (button) button.click();
       else if (action === "fullscreen") {
-        if (document.fullscreenElement) await document.exitFullscreen();
-        else await (video.parentElement ?? video).requestFullscreen();
+        // An arbitrary wrapper can fill the screen while its video stays small.
+        // Native video fullscreen handles sizing without provider-specific CSS.
+        await video.requestFullscreen();
       } else {
         const tracks = [...video.textTracks].filter((track) =>
           ["subtitles", "captions"].includes(track.kind),
@@ -244,11 +249,7 @@ export function installControls(
       isEditing(event.composedPath()[0] ?? event.target)
     )
       return;
-    if (
-      ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(
-        event.key,
-      )
-    )
+    if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key))
       return;
     const action = matchAction(event, config);
     if (

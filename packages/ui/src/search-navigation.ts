@@ -8,10 +8,7 @@ const directions: Record<string, Direction | undefined> = {
 };
 
 /** Move the remote's focus between interactive controls on the search page. */
-export function navigateSearch(
-  container: HTMLElement,
-  event: KeyboardEvent,
-) {
+export function navigateSearch(container: HTMLElement, event: KeyboardEvent) {
   if (event.altKey || event.ctrlKey || event.metaKey) return false;
   const direction = directions[event.key];
   if (!direction) return false;
@@ -27,6 +24,9 @@ export function navigateSearch(
   const controls = [
     ...container.querySelectorAll<HTMLElement>(
       "button:not(:disabled), input:not(:disabled), select:not(:disabled), a[href]",
+    ),
+    ...document.querySelectorAll<HTMLElement>(
+      '[data-search-nav="true"]:not(:disabled)',
     ),
   ].filter((element) => {
     const rect = element.getBoundingClientRect();

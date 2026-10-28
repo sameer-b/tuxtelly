@@ -9,8 +9,9 @@ logins and DRM stay in ordinary Firefox tabs on the TV laptop.
 
 ## Project status
 
-**Initial development preview.** The approved plan is being implemented in one
-private monorepo. Public release and persistent extension signing remain pending.
+**Development preview.** The Firefox extension, signing tools, and experimental
+Fedora packaging are implemented. Source builds are unsigned until submitted to
+Mozilla. There is no automatic update feed or published stable release yet.
 
 The preview includes recent-use service ordering, a last-used resume action,
 guided service setup, keyboard mapping and calibration, managed tabs, an in-page
@@ -21,11 +22,10 @@ key stay in the Firefox profile; no server is needed. Peacock is included in the
 home service list and global search filters. See
 [global search setup](docs/global-search.md).
 
-Local checks pass 36 unit tests. The most recent recorded run passed 19 Firefox
-integration checks on the reference Fedora 44 laptop with Firefox 156; the new
-Prime Video and recent-use-ordering flows still need a browser run. Fixture checks
-do not establish full provider compatibility. A separate live YouTube probe
-passed 9 checks covering public playback, search, controls, and tab switching.
+Automated checks cover configuration, navigation, player controls, permissions,
+and service-tab lifecycle. A separate opt-in YouTube probe checks signed-out
+public playback, search, controls, and tab switching. Fixture checks do not
+establish full provider compatibility.
 Prime Video, Netflix, Disney+, HBO Max, Peacock, and signed-in YouTube flows
 remain unverified.
 See [test status](docs/acceptance.md).
@@ -36,8 +36,9 @@ Use Node.js 24 LTS and pnpm 12.11.2 to build it:
 
 ```sh
 pnpm install --frozen-lockfile
+pnpm format:check
 pnpm check
-pnpm build
+pnpm test:firefox
 pnpm package
 ```
 
@@ -47,7 +48,7 @@ menu; its Home screen is bundled in the extension. Settings, service definitions
 and permissions are stored in that Firefox profile. Grant access only to the
 streaming sites you want TuxTelly to control, then sign in on each provider's page.
 
-For your Fedora TV laptop, use the [preview setup instructions](docs/installation.md).
+For a Fedora TV setup, use the [installation instructions](docs/installation.md).
 Temporary add-ons disappear when Firefox restarts. Persistent installation needs
 a Mozilla-signed extension; the preview package is unsigned. Enable **Open
 TuxTelly Home when this Firefox profile starts** in the dedicated TV profile to
@@ -62,6 +63,8 @@ use.
 - [Global search server option analysis](docs/global-search-server-plan.md) (server deferred)
 - [Hardware and provider acceptance checklist](docs/acceptance.md)
 - [Contributing](CONTRIBUTING.md)
+- [Security reporting](SECURITY.md)
+- [Publication and release preparation](docs/publication.md)
 
 ## Controls
 
@@ -82,10 +85,10 @@ from system volume.
 Adding an arbitrary URL provides launch support. Navigation and playback control
 depend on the website and require permission plus a compatible adapter.
 
-## Reference setup
+## Reference test environment
 
-- Fedora 44, KDE Wayland, Firefox; Intel i5-1135G7, x86-64, 8 GB RAM.
-- Rii MX3 2.4 GHz air mouse and keyboard remote, pending physical calibration.
+- Fedora 44, KDE Wayland, native Firefox, and an x86-64 laptop.
+- A USB air mouse and keyboard remote; physical calibration remains pending.
 - One local Firefox profile; optional static hosting only for multiple TVs.
 - Provider implementation and testing order: YouTube, Netflix, Disney+, HBO Max,
   then Prime Video.
@@ -98,6 +101,9 @@ Home & display settings include solid colors, gradients, soft blurred palettes,
 and locally bundled 4K photo wallpapers. The cozy VHS living-room theme is the
 default, with Windows 95 and midnight themes available. See the
 [wallpaper credits](packages/ui/src/assets/wallpapers/README.md).
+The app’s **About & credits** page includes TMDB and JustWatch attribution.
+Source code is MIT-licensed; bundled photographs and the TMDB logo retain their
+respective licenses and attribution requirements.
 
 ## Repository layout
 
@@ -109,13 +115,19 @@ packages/adapters/    Generic controls and initial provider hooks
 packages/ui/          Shared launcher, settings, and remote calibration
 tests/                Local video fixtures and Firefox integration checks
 deploy/caddy/         Optional static hosting configuration
-integrations/fedora/  Read-only diagnostics and local preview launcher
+integrations/fedora/  Fedora setup and diagnostics scripts
+integrations/linux/   Firefox launcher, desktop entry, and Fedora RPM sources
 docs/                 Requirements, installation, and acceptance status
 ```
 
 `pnpm test:firefox` exercises the extension with an isolated Firefox profile.
 `pnpm test:youtube` runs an opt-in live-site check. `pnpm package` creates the
 extension archive plus an optional hosted-launcher archive and checksums.
+
+An experimental Fedora RPM can be built on Fedora with `rpmbuild` and a
+Mozilla-signed XPI: `scripts/build-rpm.sh artifacts/signed/tuxtelly.xpi`. It
+installs the launcher and a Firefox extension policy while preserving unrelated
+policy entries. See [Fedora app packaging](docs/installation.md#fedora-app-package).
 
 TuxTelly is independent of the streaming providers. Provider names identify
 intended integrations and do not imply endorsement or verified compatibility.

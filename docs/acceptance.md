@@ -1,13 +1,13 @@
 # Reference-machine acceptance
 
-Reference: Fedora 44, KDE, i5-1135G7, 8 GB RAM, Rii MX3 remote, Firefox.
+Reference: Fedora 44, KDE, native Firefox, x86-64 laptop, USB remote.
 Status: **SSH preflight and isolated Firefox fixture checks passed. Physical TV,
 remote, and account-based provider acceptance pending.**
 
 ## Automated reference-machine results
 
 Tested 2026-10-15 America/Los_Angeles (2026-10-16 UTC): Fedora 44, KDE Wayland,
-Firefox 156.0 at `/usr/bin/firefox`, x86-64, approximately 7.4 GiB usable RAM.
+Firefox 156.0, x86-64.
 The browser ran headless in a fresh test profile via geckodriver 0.37.1; the test
 runner was on macOS over SSH. The regular Firefox profile was not used.
 
@@ -17,13 +17,15 @@ navigation, protected text input, actual fixture-video seeking, captions, player
 fullscreen, pause-on-switch, repeated-launch deduplication, closed-tab recovery,
 bridge isolation, permission revocation, and offline Home activation.
 
-The current working copy passes 25 unit tests, TypeScript, ESLint, Prettier,
-builds, and extension lint. The most recent recorded Fedora 44 / Firefox 156.0
-headless run passed 19 browser checks, including guided setup, background-tab
-pause, and cleanup of TuxTelly-owned mute state. The new Prime Video and recent-use
-ordering flows still need a browser run. Firefox lint reports two bundled React
-renderer `innerHTML` warnings; project code does not use raw HTML rendering or
-runtime code generation.
+The local development tree most recently passed 42 unit tests, five Linux package
+tests, TypeScript, ESLint, Prettier, production builds, and extension lint. The
+2026-10-27 headless macOS / Firefox 159 run passed 23 fixture checks covering
+extension loading, the bundled and hosted About pages, a configured seek shortcut,
+fullscreen sizing, site permissions, and tab lifecycle. An opt-in live probe on
+Firefox 159 / macOS passed 10 signed-out YouTube checks. Neither result qualifies
+the separate Fedora TV installation or signed-in provider accounts. Firefox lint
+reports two warnings for bundled React renderer `innerHTML`; project code does not
+use raw HTML rendering or runtime code generation.
 
 Fixture tests do not validate DRM, GPU decoding, HDMI audio, physical remote
 behavior, or provider account flows.
@@ -42,16 +44,16 @@ The public test video was [Blender's Big Buck Bunny](https://www.youtube.com/wat
 Its captions control reported unavailable, so real YouTube captions remain untested.
 This is one public video in headless Firefox, not full YouTube qualification.
 
-| Flow                                     | YouTube                                      | Netflix  | Disney+  | HBO Max  | Prime Video | Peacock  |
-| ---------------------------------------- | -------------------------------------------- | -------- | -------- | -------- | ----------- | -------- |
-| Ordinary Firefox playback                | Passed: one public video                     | Untested | Untested | Untested | Untested    | Untested |
-| Provider login and profile selection     | Untested                                     | Untested | Untested | Untested | Untested    | Untested |
-| Catalog, search, title/episode selection | Partial: keyboard search                     | Untested | Untested | Untested | Untested    | Untested |
-| Play/pause and seek                      | Partial: play/pause passed; native arrows need recheck | Untested | Untested | Untested | Untested | Untested |
-| Subtitles/audio menu                     | Untested: captions unavailable on test video | Untested | Untested | Untested | Untested | Untested |
-| Browser/player fullscreen                | Passed: player only, headless                | Untested | Untested | Untested | Untested    | Untested |
-| Switch away, pause, and return           | Passed: Home and existing watch tab          | Untested | Untested | Untested | Untested    | Untested |
-| Login persistence across restart         | Untested                                     | Untested | Untested | Untested | Untested    | Untested |
+| Flow                                     | YouTube                                                | Netflix  | Disney+  | HBO Max  | Prime Video | Peacock  |
+| ---------------------------------------- | ------------------------------------------------------ | -------- | -------- | -------- | ----------- | -------- |
+| Ordinary Firefox playback                | Passed: one public video                               | Untested | Untested | Untested | Untested    | Untested |
+| Provider login and profile selection     | Untested                                               | Untested | Untested | Untested | Untested    | Untested |
+| Catalog, search, title/episode selection | Partial: keyboard search                               | Untested | Untested | Untested | Untested    | Untested |
+| Play/pause and seek                      | Partial: play/pause passed; native arrows need recheck | Untested | Untested | Untested | Untested    | Untested |
+| Subtitles/audio menu                     | Untested: captions unavailable on test video           | Untested | Untested | Untested | Untested    | Untested |
+| Browser/player fullscreen                | Passed: player only, headless                          | Untested | Untested | Untested | Untested    | Untested |
+| Switch away, pause, and return           | Passed: Home and existing watch tab                    | Untested | Untested | Untested | Untested    | Untested |
+| Login persistence across restart         | Untested                                               | Untested | Untested | Untested | Untested    | Untested |
 
 Additional gates:
 
