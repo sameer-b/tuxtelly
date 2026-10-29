@@ -1,0 +1,98 @@
+diff --git a/cjs/react-dom-client.development.js b/cjs/react-dom-client.development.js
+index 90a9293eb9d445819cfd7cdecc909a68e68973d2..b158345323b0561aaf7e393c03b91fdd44ecbb02 100644
+--- a/cjs/react-dom-client.development.js
++++ b/cjs/react-dom-client.development.js
+@@ -21836,21 +21836,10 @@
+             listenToNonDelegatedEvent("scrollend", domElement));
+           return;
+         case "dangerouslySetInnerHTML":
+-          if (null != value) {
+-            if ("object" !== typeof value || !("__html" in value))
+-              throw Error(
+-                "`props.dangerouslySetInnerHTML` must be in the form `{__html: ...}`. Please visit https://react.dev/link/dangerously-set-inner-html for more information."
+-              );
+-            key = value.__html;
+-            if (null != key) {
+-              if (null != props.children)
+-                throw Error(
+-                  "Can only set one of `children` or `props.dangerouslySetInnerHTML`."
+-                );
+-              (null != prevValue ? prevValue.__html : void 0) !== key &&
+-                (domElement.innerHTML = key);
+-            }
+-          }
++          if (null != value)
++            throw Error(
++              "dangerouslySetInnerHTML is disabled in this application."
++            );
+           break;
+         case "multiple":
+           domElement.multiple =
+@@ -22095,21 +22084,10 @@
+           setValueForStyles(domElement, value, prevValue);
+           return;
+         case "dangerouslySetInnerHTML":
+-          if (null != value) {
+-            if ("object" !== typeof value || !("__html" in value))
+-              throw Error(
+-                "`props.dangerouslySetInnerHTML` must be in the form `{__html: ...}`. Please visit https://react.dev/link/dangerously-set-inner-html for more information."
+-              );
+-            key = value.__html;
+-            if (null != key) {
+-              if (null != props.children)
+-                throw Error(
+-                  "Can only set one of `children` or `props.dangerouslySetInnerHTML`."
+-                );
+-              (null != prevValue ? prevValue.__html : void 0) !== key &&
+-                (domElement.innerHTML = key);
+-            }
+-          }
++          if (null != value)
++            throw Error(
++              "dangerouslySetInnerHTML is disabled in this application."
++            );
+           break;
+         case "children":
+           if ("string" === typeof value) setTextContent(domElement, value);
+diff --git a/cjs/react-dom-client.production.js b/cjs/react-dom-client.production.js
+index 9c66e78ba70a6ce5270bbbfc2e7e25f86dd2d64b..af4fb65bdcba5f9efdee52129eedaa05732183c8 100644
+--- a/cjs/react-dom-client.production.js
++++ b/cjs/react-dom-client.production.js
+@@ -14514,16 +14514,8 @@ function setProp(domElement, tag, key, value, props, prevValue) {
+       null != value && listenToNonDelegatedEvent("scrollend", domElement);
+       return;
+     case "dangerouslySetInnerHTML":
+-      if (null != value) {
+-        if ("object" !== typeof value || !("__html" in value))
+-          throw Error(formatProdErrorMessage(61));
+-        key = value.__html;
+-        if (null != key) {
+-          if (null != props.children) throw Error(formatProdErrorMessage(60));
+-          (null != prevValue ? prevValue.__html : void 0) !== key &&
+-            (domElement.innerHTML = key);
+-        }
+-      }
++      if (null != value)
++        throw Error("dangerouslySetInnerHTML is disabled in this application.");
+       break;
+     case "multiple":
+       domElement.multiple =
+@@ -14732,16 +14724,8 @@ function setPropOnCustomElement(domElement, tag, key, value, props, prevValue) {
+       setValueForStyles(domElement, value, prevValue);
+       return;
+     case "dangerouslySetInnerHTML":
+-      if (null != value) {
+-        if ("object" !== typeof value || !("__html" in value))
+-          throw Error(formatProdErrorMessage(61));
+-        key = value.__html;
+-        if (null != key) {
+-          if (null != props.children) throw Error(formatProdErrorMessage(60));
+-          (null != prevValue ? prevValue.__html : void 0) !== key &&
+-            (domElement.innerHTML = key);
+-        }
+-      }
++      if (null != value)
++        throw Error("dangerouslySetInnerHTML is disabled in this application.");
+       break;
+     case "children":
+       if ("string" === typeof value) setTextContent(domElement, value);
