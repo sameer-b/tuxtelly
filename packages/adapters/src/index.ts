@@ -68,6 +68,12 @@ const selectors: Record<
     fullscreen:
       'button[aria-label*="full screen" i], button[aria-label*="fullscreen" i], [role="button"][aria-label*="full screen" i], [data-testid*="fullscreen" i]',
   },
+  peacock: {
+    captions:
+      'button[aria-label*="caption" i], button[aria-label*="subtitle" i], button[aria-label*="cc" i], [data-testid*="caption" i], [data-testid*="subtitle" i]',
+    fullscreen:
+      'button[aria-label*="full screen" i], button[aria-label*="fullscreen" i], [data-testid*="fullscreen" i]',
+  },
   generic: {
     captions:
       'button[aria-label*="caption" i], button[aria-label*="subtitle" i]',

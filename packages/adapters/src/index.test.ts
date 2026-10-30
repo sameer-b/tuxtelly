@@ -109,6 +109,119 @@ describe("provider arrow keys", () => {
     document.body.removeAttribute("tabindex");
   });
 });
+describe("Peacock fullscreen", () => {
+  const service = {
+    ...defaultConfig.services.find((s) => s.id === "peacock")!,
+    adapter: "peacock" as const,
+  };
+  afterEach(() => {
+    document.body.replaceChildren();
+    vi.restoreAllMocks();
+  });
+  function fixture() {
+    const wrapper = document.createElement("div");
+    wrapper.className = "peacock-player-container";
+    const video = document.createElement("video");
+    video.style.width = "560px";
+    const captionsBtn = document.createElement("button");
+    captionsBtn.setAttribute("aria-label", "Captions");
+    captionsBtn.className = "player-captions-button";
+    captionsBtn.textContent = "CC";
+    const fullscreenBtn = document.createElement("button");
+    fullscreenBtn.setAttribute("aria-label", "Fullscreen");
+    fullscreenBtn.className = "player-fullscreen-button";
+    fullscreenBtn.setAttribute("data-testid", "fullscreen-button");
+    fullscreenBtn.textContent = "Fullscreen";
+    wrapper.append(video, captionsBtn, fullscreenBtn);
+    document.body.append(wrapper);
+    vi.spyOn(video, "getBoundingClientRect").mockReturnValue({
+      width: 560,
+      height: 315,
+    } as DOMRect);
+    vi.spyOn(captionsBtn, "getBoundingClientRect").mockReturnValue({
+      width: 36,
+      height: 36,
+    } as DOMRect);
+    const enter = vi.fn().mockResolvedValue(undefined);
+    video.requestFullscreen = enter;
+    const clickCaptions = vi.spyOn(captionsBtn, "click");
+    const clickFullscreen = vi.spyOn(fullscreenBtn, "click");
+    return {
+      video,
+      captionsBtn,
+      fullscreenBtn,
+      enter,
+      clickCaptions,
+      clickFullscreen,
+    };
+  }
+  it("uses the Peacock fullscreen button", async () => {
+    const { fullscreenBtn, enter, clickFullscreen } = fixture();
+    Object.defineProperty(fullscreenBtn, "getBoundingClientRect", {
+      value: () => ({ width: 36, height: 36 }),
+    });
+    expect(await playerAction("fullscreen", service, defaultConfig)).toEqual({
+      ok: true,
+    });
+    expect(clickFullscreen).toHaveBeenCalledOnce();
+    expect(enter).not.toHaveBeenCalled();
+  });
+  it("falls back to video.requestFullscreen when no button is found", async () => {
+    const { video, enter } = fixture();
+    const btn = document.querySelector(".player-fullscreen-button");
+    btn?.remove();
+    Object.defineProperty(video, "getBoundingClientRect", {
+      value: () => ({ width: 560, height: 315 }),
+    });
+    expect(await playerAction("fullscreen", service, defaultConfig)).toEqual({
+      ok: true,
+    });
+    expect(enter).toHaveBeenCalledOnce();
+  });
+});
+describe("Peacock captions", () => {
+  const service = {
+    ...defaultConfig.services.find((s) => s.id === "peacock")!,
+    adapter: "peacock" as const,
+  };
+  afterEach(() => {
+    document.body.replaceChildren();
+    vi.restoreAllMocks();
+  });
+  function fixture() {
+    const wrapper = document.createElement("div");
+    wrapper.className = "peacock-player-container";
+    const video = document.createElement("video");
+    video.style.width = "560px";
+    const captionsBtn = document.createElement("button");
+    captionsBtn.setAttribute("aria-label", "Captions");
+    captionsBtn.className = "player-captions-button";
+    captionsBtn.setAttribute("data-testid", "captions-button");
+    captionsBtn.textContent = "CC";
+    const track = document.createElement("track");
+    track.kind = "captions";
+    track.srclang = "en";
+    video.append(track);
+    wrapper.append(video, captionsBtn);
+    document.body.append(wrapper);
+    vi.spyOn(video, "getBoundingClientRect").mockReturnValue({
+      width: 560,
+      height: 315,
+    } as DOMRect);
+    const clickCaptions = vi.spyOn(captionsBtn, "click");
+    return { video, captionsBtn, clickCaptions };
+  }
+  it("uses the Peacock captions button", async () => {
+    const { captionsBtn, clickCaptions } = fixture();
+    Object.defineProperty(captionsBtn, "getBoundingClientRect", {
+      value: () => ({ width: 36, height: 36 }),
+    });
+    expect(await playerAction("captions", service, defaultConfig)).toEqual({
+      ok: true,
+    });
+    expect(clickCaptions).toHaveBeenCalledOnce();
+  });
+});
 describe("seeking", () => {
   function video(position: number, pairs: [number, number][]) {
     return {

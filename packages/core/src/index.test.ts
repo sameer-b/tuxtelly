@@ -77,7 +77,7 @@ describe("configuration boundaries", () => {
       name: "Peacock",
       url: "https://www.peacocktv.com/",
       origins: ["https://www.peacocktv.com"],
-      adapter: "generic",
+      adapter: "peacock",
       enabled: true,
     });
     expect(

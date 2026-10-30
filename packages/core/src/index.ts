@@ -75,7 +75,15 @@ export const serviceSchema = z
       .min(1)
       .max(12),
     adapter: z
-      .enum(["generic", "youtube", "netflix", "disney", "hbo", "prime"])
+      .enum([
+        "generic",
+        "youtube",
+        "netflix",
+        "disney",
+        "hbo",
+        "prime",
+        "peacock",
+      ])
       .default("generic"),
     color: z
       .string()
@@ -235,7 +243,7 @@ export const defaultConfig: Config = configSchema.parse({
       name: "Peacock",
       url: "https://www.peacocktv.com/",
       origins: ["https://www.peacocktv.com"],
-      adapter: "generic",
+      adapter: "peacock",
       color: "#f6c744",
     },
   ],
