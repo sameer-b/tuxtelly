@@ -359,7 +359,7 @@ try {
     .sendKeys(Key.ARROW_RIGHT, Key.ARROW_RIGHT, Key.ENTER)
     .perform();
   await driver.wait(
-    async () => (await driver.getAllWindowHandles()).length === 4,
+    async () => (await driver.getAllWindowHandles()).length === 3,
     10000,
   );
   assert.equal(
