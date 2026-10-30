@@ -141,7 +141,7 @@ try {
   );
   await driver.get(home);
   await driver.wait(
-    async () => (await driver.getAllWindowHandles()).length === 3,
+    until.elementLocated(By.css('[data-service="youtube"]')),
     10000,
   );
   const homeHandle = await driver.getWindowHandle();
