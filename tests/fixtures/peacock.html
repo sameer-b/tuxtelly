@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Peacock player fixture</title>
+    <style>
+      body {
+        background: #1c1b1f;
+        color: #fff;
+        font:
+          16px system-ui,
+          -apple-system,
+          sans-serif;
+        margin: 0;
+        padding: 0;
+      }
+      .player-container {
+        position: relative;
+        width: 100%;
+        max-width: 1280px;
+        margin: 0 auto;
+        background: #000;
+      }
+      video {
+        display: block;
+        width: 100%;
+      }
+      .player-controls {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        background: linear-gradient(transparent, rgba(0, 0, 0, 0.85));
+      }
+      .player-controls button {
+        background: none;
+        border: none;
+        color: #fff;
+        cursor: pointer;
+        padding: 8px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 36px;
+        height: 36px;
+      }
+      .player-controls button:hover {
+        opacity: 0.8;
+      }
+      .player-controls button:disabled,
+      .player-controls button[aria-disabled="true"] {
+        opacity: 0.4;
+        cursor: default;
+      }
+      .controls-spacer {
+        flex: 1;
+      }
+      .playback-time {
+        font-size: 13px;
+        color: #ccc;
+        margin-right: 8px;
+        font-variant-numeric: tabular-nums;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="player-container">
+      <video id="peacock-player" tabindex="0" preload="auto" src="/sample.webm">
+        <track
+          kind="captions"
+          srclang="en"
+          label="English"
+          src="/captions.vtt"
+        />
+      </video>
+      <div class="player-controls">
+        <button id="play-pause" aria-label="Play">
+          <svg width="20" height="20" viewBox="0 0 20 20">
+            <polygon points="4,2 18,10 4,18" fill="currentColor" />
+          </svg>
+        </button>
+        <span class="playback-time">00:00 / 00:30</span>
+        <button aria-label="Volume" id="volume-btn">
+          <svg width="20" height="20" viewBox="0 0 20 20">
+            <path d="M2 7h3l4-4v14l-4-4H2z" fill="currentColor" />
+          </svg>
+        </button>
+        <button aria-label="Captions" id="captions-btn">CC</button>
+        <div class="controls-spacer"></div>
+        <button aria-label="Fullscreen" id="fullscreen-btn">
+          <svg width="20" height="20" viewBox="0 0 20 20">
+            <path
+              d="M3 3h3V1H3v2zm9 0h2V1h-2v2zm5 0h3v2h-2v3h-2V3h2zm0 11h2v3h-2v-3zM9 17H3v2h6v-2zm8-8h2v3h-2v-3zM3 14h2v3H3v-3z"
+              fill="currentColor"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+    <script>
+      var video = document.getElementById("peacock-player");
+      var captionsBtn = document.getElementById("captions-btn");
+      var fullscreenBtn = document.getElementById("fullscreen-btn");
+      var playPauseBtn = document.getElementById("play-pause");
+      captionsBtn.addEventListener("click", function () {
+        var tracks = video.textTracks;
+        for (var i = 0; i < tracks.length; i++) {
+          if (tracks[i].kind === "captions" || tracks[i].kind === "subtitles") {
+            var isShowing = tracks[i].mode === "showing";
+            for (var j = 0; j < tracks.length; j++) {
+              tracks[j].mode = j === i && !isShowing ? "showing" : "disabled";
+            }
+            captionsBtn.setAttribute(
+              "aria-label",
+              isShowing ? "Captions Off" : "Captions On",
+            );
+            return;
+          }
+        }
+        captionsBtn.setAttribute("aria-label", "No Captions Available");
+      });
+      fullscreenBtn.addEventListener("click", function () {
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+        } else {
+          video.requestFullscreen();
+        }
+      });
+      playPauseBtn.addEventListener("click", function () {
+        if (video.paused) {
+          video.play();
+          playPauseBtn.innerHTML =
+            '<svg width="20" height="20" viewBox="0 0 20 20"><rect x="4" y="2" width="4" height="16" fill="currentColor"/><rect x="12" y="2" width="4" height="16" fill="currentColor"/></svg>';
+        } else {
+          video.pause();
+          playPauseBtn.innerHTML =
+            '<svg width="20" height="20" viewBox="0 0 20 20"><polygon points="4,2 18,10 4,18" fill="currentColor"/></svg>';
+        }
+      });
+    </script>
+  </body>
+</html>

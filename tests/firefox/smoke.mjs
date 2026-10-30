@@ -22,9 +22,11 @@ const server = createServer(async (request, response) => {
   const path = new URL(request.url, "http://localhost").pathname;
   const file = path.startsWith("/fixture/")
     ? join(root, "tests/fixtures/service.html")
-    : ["/sample.webm", "/captions.vtt"].includes(path)
-      ? join(root, "tests/fixtures", path)
-      : join(root, "apps/launcher/dist", path === "/" ? "index.html" : path);
+    : path === "/peacock"
+      ? join(root, "tests/fixtures/peacock.html")
+      : ["/sample.webm", "/captions.vtt"].includes(path)
+        ? join(root, "tests/fixtures", path)
+        : join(root, "apps/launcher/dist", path === "/" ? "index.html" : path);
   if (!file.startsWith(root + "/")) {
     response.writeHead(403);
     response.end();
@@ -365,9 +367,8 @@ try {
     true,
   );
   check("switcher pauses previous service before changing tabs");
-  const twoHandle = (await driver.getAllWindowHandles()).find(
-    (id) => ![homeHandle, oneHandle].includes(id),
-  );
+  const handles = await driver.getAllWindowHandles();
+  const twoHandle = handles.find((id) => ![homeHandle, oneHandle].includes(id));
   await driver.switchTo().window(twoHandle);
   await driver.wait(until.elementLocated(By.id("card-one")), 10000);
   assert.equal(
@@ -412,6 +413,8 @@ try {
     5000,
   );
   check("switching from Home pauses playback in an inactive service tab");
+
+  await driver.switchTo().window(oneHandle);
 
   await driver.executeScript('document.querySelector("video").remove()');
   await driver.switchTo().window(homeHandle);
