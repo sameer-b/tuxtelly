@@ -141,7 +141,7 @@ try {
   );
   await driver.get(home);
   await driver.wait(
-    until.elementLocated(By.css('[data-service="youtube"]')),
+    async () => (await driver.getAllWindowHandles()).length === 3,
     10000,
   );
   const homeHandle = await driver.getWindowHandle();
@@ -372,7 +372,7 @@ try {
   check("switcher pauses previous service before changing tabs");
   const handles = await driver.getAllWindowHandles();
   const twoHandle = handles.find(
-    (id) => ![homeHandle, oneHandle, handles[handles.length - 1]].includes(id),
+    (id) => ![homeHandle, oneHandle].includes(id),
   );
   await driver.switchTo().window(twoHandle);
   await driver.wait(until.elementLocated(By.id("card-one")), 10000);
