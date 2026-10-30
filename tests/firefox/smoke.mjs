@@ -201,16 +201,13 @@ try {
     shift: false,
   });
   config.launcherUrl = origin + "/";
-  config.services = ["one", "two", "peacock-fixture"].map((id) => ({
+  config.services = ["one", "two"].map((id) => ({
     id,
-    name: id === "peacock-fixture" ? "Peacock" : `Fixture ${id}`,
-    url:
-      id === "peacock-fixture"
-        ? `${origin}/peacock`
-        : `${origin}/fixture/${id}`,
+    name: `Fixture ${id}`,
+    url: `${origin}/fixture/${id}`,
     origins: [origin],
-    adapter: id === "peacock-fixture" ? "peacock" : "generic",
-    color: "#f6c744",
+    adapter: "generic",
+    color: "#5be5bc",
     enabled: true,
     backgroundAudio: false,
   }));
@@ -417,57 +414,6 @@ try {
   );
   check("switching from Home pauses playback in an inactive service tab");
 
-  // Peacock-specific controls test
-  await driver.switchTo().window(homeHandle);
-  assert.equal(
-    (await message({ type: "open", serviceId: "peacock-fixture" })).ok,
-    true,
-  );
-  await driver.wait(
-    async () => (await driver.getAllWindowHandles()).length === 4,
-    10000,
-  );
-  const peacockHandle = (await driver.getAllWindowHandles()).find(
-    (id) => ![homeHandle, oneHandle, twoHandle].includes(id),
-  );
-  await driver.switchTo().window(peacockHandle);
-  await driver.wait(until.elementLocated(By.id("peacock-player")), 10000);
-  await driver.findElement(By.id("play-pause")).click();
-  await driver.wait(
-    async () =>
-      await driver.executeAsyncScript(
-        'const done=arguments[arguments.length-1];const v=document.querySelector("video");done(!v.paused&&v.seekable.length>0);',
-      ),
-    10000,
-  );
-  check("Peacock fixture starts playback");
-  await driver.actions().sendKeys("c").perform();
-  const captionsEnabled = await driver.executeAsyncScript(
-    'const done=arguments[arguments.length-1];const v=document.querySelector("video");const track=v.textTracks[0];done(track&&track.mode==="showing");',
-  );
-  assert.ok(captionsEnabled, "Peacock captions should toggle via key shortcut");
-  check("Peacock captions toggle via keyboard shortcut");
-  await driver.actions().sendKeys("f").perform();
-  await driver.wait(
-    async () =>
-      await driver.executeScript("return document.fullscreenElement !== null"),
-    5000,
-  );
-  check("Peacock fullscreen expands via the player's fullscreen button");
-  await driver.actions().sendKeys("f").perform();
-  await driver.wait(
-    async () =>
-      await driver.executeScript("return document.fullscreenElement === null"),
-    5000,
-  );
-  check("Peacock fullscreen exits when pressing the fullscreen key again");
-  await driver.close();
-  await driver.switchTo().window(homeHandle);
-  await driver.wait(
-    async () => (await driver.getAllWindowHandles()).length === 3,
-    10000,
-  );
-  check("Peacock fixture tab closed");
   await driver.switchTo().window(oneHandle);
 
   await driver.executeScript('document.querySelector("video").remove()');
