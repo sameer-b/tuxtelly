@@ -371,9 +371,7 @@ try {
   );
   check("switcher pauses previous service before changing tabs");
   const handles = await driver.getAllWindowHandles();
-  const twoHandle = handles.find(
-    (id) => ![homeHandle, oneHandle].includes(id),
-  );
+  const twoHandle = handles.find((id) => ![homeHandle, oneHandle].includes(id));
   await driver.switchTo().window(twoHandle);
   await driver.wait(until.elementLocated(By.id("card-one")), 10000);
   assert.equal(
